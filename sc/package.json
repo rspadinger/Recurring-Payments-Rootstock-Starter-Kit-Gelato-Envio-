@@ -1,0 +1,34 @@
+{
+    "name": "envio-gelato-starterkit",
+    "version": "0.0.1",
+    "license": "MIT",
+    "description": "",
+    "scripts": {
+        "node": "hardhat node",
+        "test": "hardhat test",
+        "coverage": "hardhat coverage",
+        "compile": "hardhat compile",
+        "postcompile": "cp artifacts/contracts/RecurringPaymentFactory.sol/RecurringPaymentFactory.json ../ui/abi/RecurringPaymentFactory.json && cp artifacts/contracts/RecurringPayment.sol/RecurringPayment.json ../ui/abi/RecurringPayment.json",
+        "deploy": "hardhat run scripts/deployVerify.js --network rskTestnet",
+        "verify": "bash ./scripts/verify.sh",
+        "sol:format:check": "prettier --check --plugin=prettier-plugin-solidity 'contracts/**/*.sol'",
+        "sol:format:write": "prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol'",
+        "solhint": "solhint -f table 'contracts/**/*.sol'",
+        "format:check": "prettier --check .",
+        "format:write": "prettier --write .",
+        "lint:check": "eslint .",
+        "lint:fix": "eslint --fix ."
+    },
+    "devDependencies": {
+        "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+        "hardhat": "^2.22.9",
+        "hardhat-gas-reporter": "^1.0.9",
+        "@nomiclabs/hardhat-solhint": "4.0.2",
+        "solhint": "^4.0.0"
+    },
+    "dependencies": {
+        "@chainlink/contracts": "^1.3.0",
+        "@openzeppelin/contracts": "^5.3.0",
+        "dotenv": "^16.3.1"
+    }
+}
