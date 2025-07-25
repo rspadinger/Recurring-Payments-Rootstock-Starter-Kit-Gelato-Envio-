@@ -114,10 +114,12 @@
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        border-color: var(--border);
+        outline-color: color-mix(in srgb, var(--ring) 50%, transparent);
     }
     body {
-        @apply bg-background text-foreground;
+        background-color: var(--background);
+        color: var(--foreground);
     }
 }
 
@@ -135,4 +137,20 @@
 
 .hover-logo:hover .logo-text {
     font-size: 1.85rem;
+}
+
+/* Form validation styles */
+.error-input {
+    border-color: var(--destructive);
+}
+
+.error-text {
+    color: var(--destructive);
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Tooltip styles */
+.tooltip-trigger {
+    cursor: help;
 }

@@ -1,0 +1,72 @@
+type RecurringPayment_AmountUpdated {
+  id: ID!
+  plan: String!
+  oldAmount: BigInt!
+  newAmount: BigInt!
+}
+
+type RecurringPayment_FundsAdded {
+  id: ID!
+  payer: String!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type RecurringPayment_FundsReceived {
+  id: ID!
+  payer: String!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type RecurringPayment_IntervalUpdated {
+  id: ID!
+  plan: String!
+  oldInterval: BigInt!
+  newInterval: BigInt!
+}
+
+type RecurringPayment_PaymentExecuted {
+  id: ID!
+  planAddress: String!
+  payer: String!
+  recipient: String!
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type RecurringPayment_PaymentTaskCreated {
+  id: ID!
+  taskId: String!
+  payer: String!
+  plan: String!
+}
+
+type RecurringPayment_PlanCancelled {
+  id: ID!
+  planAddress: String!
+  payer: String!
+  refundedAmount: BigInt!
+  timestamp: BigInt!
+}
+
+type RecurringPayment_PlanPaused {
+  id: ID!
+  plan: String!
+}
+
+type RecurringPayment_PlanUnpaused {
+  id: ID!
+  plan: String!
+}
+
+type RecurringPaymentFactory_PlanCreated {
+  id: ID!
+  planAddress: String!
+  payer: String!
+  recipient: String!
+  amount: BigInt!
+  interval: BigInt!
+  startTime: BigInt!
+}
+

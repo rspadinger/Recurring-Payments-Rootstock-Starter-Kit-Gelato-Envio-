@@ -1,7 +1,7 @@
 const { OWNER, RECIPIENT, RSK_TESTNET_RPC_URL, WALLET_PRIVATE_KEY } = process.env
 
-const factoryAddress = "0x2A99FeB537de85d249fF4eCC0313B59B0fbeDEBa"
-const planAddress = "0x628ADBdd079fa810A2Dc19Cc2a35F64d50399C98"
+const factoryAddress = "0xe6f758beBD1298f94D43ba8bd2a6802B8f0535A7"
+const planAddress = "0x64748677Bde4c2eEd203Be4E2432De8CB9019593"
 
 let tx
 
@@ -40,14 +40,25 @@ async function main() {
             value: 500,
         })
         await tx.wait()
+
+        // const recPayAddress = await factory.getPayerPlans()
+        // console.log("RecPay Address: ", recPayAddress[1])
+
         console.log("Recurring payment plan created.")
     }
 
     // pause plan
     if (false) {
-        tx = await plan.unpausePlan()
+        tx = await plan.pausePlan()
         await tx.wait()
         console.log("Plan paused.")
+    }
+
+    // unpause plan
+    if (false) {
+        tx = await plan.resumePlan()
+        await tx.wait()
+        console.log("Plan unpaused.")
     }
 
     // cancel plan
@@ -59,3 +70,5 @@ async function main() {
 }
 
 main()
+
+//sample task: https://app.gelato.cloud/functions/0xd1f20db3caa29feb86bdc124cfb90ee66db4f034079400e44e12f62d7526ab7d?type=overview&chainId=31

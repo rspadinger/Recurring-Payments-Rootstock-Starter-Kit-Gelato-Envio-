@@ -19,10 +19,19 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     uint256 public amount;
     uint256 public interval;
     uint256 public startTime;
+    //bool public active;
+    bytes32 public taskId;
+
+    enum PlanStatus {
+        Active,
+        Paused,
+        Canceled
+    }
+    PlanStatus public status;
+
+    //@note this is not required, because we'll use graphql
     uint256 public lastPaid;
     uint256 public totalPayments;
-    bool public active;
-    bytes32 public taskId;
 
     event PaymentExecuted(
         address indexed planAddress,
@@ -32,14 +41,14 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
         uint256 timestamp
     );
 
-    event PaymentTaskCreated(bytes32 taskId, address indexed payer, address plan);
+    event PaymentTaskCreated(address indexed payer, bytes32 taskId, address plan);
     event AmountUpdated(address indexed plan, uint256 oldAmount, uint256 newAmount);
     event IntervalUpdated(address indexed plan, uint256 oldInterval, uint256 newInterval);
-    event PlanPaused(address indexed plan);
-    event PlanUnpaused(address indexed plan);
-    event PlanCancelled(address indexed planAddress, address indexed payer, uint256 refundedAmount, uint256 timestamp);
-    event FundsAdded(address indexed payer, uint256 amount, uint256 timestamp);
-    event FundsReceived(address indexed payer, uint256 amount, uint256 timestamp);
+    event PlanPaused(address indexed plan, address indexed payer, uint256 timestamp);
+    event PlanUnpaused(address indexed plan, address indexed payer, uint256 timestamp);
+    event PlanCancelled(address indexed plan, address indexed payer, uint256 refundedAmount, uint256 timestamp);
+    event FundsAdded(address indexed plan, address indexed payer, uint256 amount, uint256 timestamp);
+    event FundsReceived(address indexed plan, address indexed payer, uint256 amount, uint256 timestamp);
 
     modifier onlyFactory() {
         require(msg.sender == factory, "Not Factory");
@@ -63,7 +72,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
 
     /// @notice Handle funds sent via plain transfer/send or EOA
     receive() external payable {
-        emit FundsReceived(msg.sender, msg.value, block.timestamp);
+        emit FundsReceived(address(this), msg.sender, msg.value, block.timestamp);
     }
 
     /// @notice Initializes the recurring payment plan with user-defined parameters.
@@ -85,7 +94,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
         amount = _amount;
         interval = _interval;
         startTime = _startTime;
-        active = true;
+        status = PlanStatus.Active;
 
         _transferOwnership(_payer);
 
@@ -97,7 +106,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
 
     /// @notice Executes the scheduled payment if conditions are met
     function executePayment() external onlyDedicatedMsgSender {
-        require(active, "Plan not active");
+        require(status == PlanStatus.Active, "Plan not active");
         require(address(this).balance >= amount, "Insufficient user funds");
 
         if (lastPaid == 0) {
@@ -121,14 +130,14 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     /// @dev This could be extended to support ERC20 tokens for funding and payments. Function can be called by any address
     function addFunds() external payable {
         require(msg.value > 0, "No funding was provided");
-        emit FundsAdded(msg.sender, msg.value, block.timestamp);
+        emit FundsAdded(address(this), msg.sender, msg.value, block.timestamp);
     }
 
     /// @notice Cancel a recurring payment plan (only the owner can)
     function cancelPlan() external onlyOwner {
-        require(active, "Plan already inactive");
+        require(status != PlanStatus.Canceled, "Already canceled");
+        status = PlanStatus.Canceled;
 
-        active = false;
         _cancelTask(taskId);
 
         // Refund remaining RSK to the payer
@@ -165,17 +174,17 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     /// @notice Pause the recurring payment plan
     /// @dev Only the owner (payer) can pause the plan; no payments can be executed while paused
     function pausePlan() external onlyOwner {
-        require(active, "Plan already paused");
-        active = false;
-        emit PlanPaused(address(this));
+        require(status == PlanStatus.Active, "Only active plans can be paused");
+        status = PlanStatus.Paused;
+        emit PlanPaused(address(this), payer, block.timestamp);
     }
 
     /// @notice Unpause the recurring payment plan
     /// @dev Only the owner (payer) can unpause the plan
-    function unpausePlan() external onlyOwner {
-        require(!active, "Plan already active");
-        active = true;
-        emit PlanUnpaused(address(this));
+    function resumePlan() external onlyOwner {
+        require(status == PlanStatus.Paused, "Only paused plans can be resumed");
+        status = PlanStatus.Active;
+        emit PlanUnpaused(address(this), payer, block.timestamp);
     }
 
     // ********************* GETTER FUNCTIONS *********************
@@ -202,6 +211,11 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
         return lastPaid + interval;
     }
 
+    /// @notice Get status of plan
+    function getStatus() external view returns (PlanStatus) {
+        return status;
+    }
+
     // ********************* INTERNAL FUNCTIONS *********************
 
     function _createTask() internal {
@@ -221,6 +235,6 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
 
         taskId = _createTask(address(this), execData, moduleData, address(0));
 
-        emit PaymentTaskCreated(taskId, payer, address(this));
+        emit PaymentTaskCreated(payer, taskId, address(this));
     }
 }

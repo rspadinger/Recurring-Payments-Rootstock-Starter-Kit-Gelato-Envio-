@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: envio-indexer
+networks:
+    - id: 31
+      rpc_config:
+          url: https://rootstock-testnet.g.alchemy.com/v2/2_F7dgp4mWUW4d089X4Ttyi0JUAESl_0
+      start_block: 6600000
+      contracts:
+          - name: RecurringPaymentFactory
+            address:
+                - 0xe6f758beBD1298f94D43ba8bd2a6802B8f0535A7
+            handler: src/EventHandlers.ts
+            events:
+                - event: PlanCreated(address indexed planAddress, address indexed payer, address indexed recipient, uint256 amount, uint256 interval, uint256 startTime)
+          - name: RecurringPayment
+            # No address field - we'll discover these addresses from events
+            # address: 0x64748677Bde4c2eEd203Be4E2432De8CB9019593
+            handler: src/EventHandlers.ts
+            events:
+                - event: AmountUpdated(address indexed plan, uint256 oldAmount, uint256 newAmount)
+                - event: FundsAdded(address indexed payer, uint256 amount, uint256 timestamp)
+                - event: FundsReceived(address indexed payer, uint256 amount, uint256 timestamp)
+                - event: IntervalUpdated(address indexed plan, uint256 oldInterval, uint256 newInterval)
+                - event: PaymentExecuted(address indexed planAddress, address indexed payer, address indexed recipient, uint256 amount, uint256 timestamp)
+                - event: PaymentTaskCreated(bytes32 taskId, address indexed payer, address plan)
+                - event: PlanCancelled(address indexed planAddress, address indexed payer, uint256 refundedAmount, uint256 timestamp)
+                - event: PlanPaused(address indexed plan)
+                - event: PlanUnpaused(address indexed plan)
+unordered_multichain_mode: true

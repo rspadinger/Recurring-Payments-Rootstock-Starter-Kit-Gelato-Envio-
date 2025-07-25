@@ -10,6 +10,7 @@ import "hardhat/console.sol";
 contract RecurringPaymentFactory is Ownable {
     address public immutable recurringPaymentImplementation;
 
+    //@note this is not required, because we'll use graphql to get this information from the PlanCreated event
     mapping(address => address[]) public payerToPlans;
     mapping(address => address[]) public recipientToPlans;
 

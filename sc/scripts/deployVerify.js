@@ -33,10 +33,7 @@ async function main() {
     console.log("Recurring payment plan created.")
 }
 
-main().catch((error) => {
-    console.error(error)
-    process.exitCode = 1
-})
+main()
 
 //npm run deploy
 //npm run verify
