@@ -3,10 +3,11 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Wallet, Home, Gift, Moon, Sun } from "lucide-react"
+import { Wallet, Home, Gift, Moon, Sun, Package } from "lucide-react"
 import { usePrivy } from "@privy-io/react-auth"
 // @ts-expect-error working fine
 import { useAccount, useDisconnect } from "wagmi"
+import { abbreviateAddress } from "@/lib/utils"
 
 export default function Header() {
     // Hooks
@@ -22,13 +23,18 @@ export default function Header() {
                     <div className="hover-logo">
                         <span className="logo-text">
                             <span className="text-cyan-500 font-extrabold pr-0 ">Stream</span>
-                            <span className="text-neutral-700 hover:text-neutral-900 font-extrabold">Pay</span>
+                            <span className="text-neutral-700 hover:text-neutral-900 dark:text-neutral-200 dark:hover:text-white font-extrabold">
+                                Pay
+                            </span>
                         </span>
                     </div>
                 </Link>
 
                 <nav className="hidden md:flex space-x-6 mx-4">
-                    <Link href="/" className="text-slate-600 hover:text-cyan-600 transition-colors">
+                    <Link
+                        href="/"
+                        className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
+                    >
                         <span className="flex items-center">
                             <Home className="mr-1 h-4 w-4" />
                             Home
@@ -36,10 +42,13 @@ export default function Header() {
                     </Link>
 
                     {ready && user && (
-                        <Link href="/heir" className="text-slate-600 hover:text-cyan-600 transition-colors">
+                        <Link
+                            href="/plans"
+                            className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
+                        >
                             <span className="flex items-center">
-                                <Gift className="mr-1 h-4 w-4" />
-                                My Inheritance
+                                <Package className="mr-1 h-4 w-4" />
+                                My Plans
                             </span>
                         </Link>
                     )}
@@ -75,12 +84,8 @@ export default function Header() {
                             <Wallet className="mr-2 h-4 w-4" />
                             {!authenticated && !address && "Connect Wallet"}
                             {authenticated && !address && "Logout"}
-                            {authenticated &&
-                                address &&
-                                `Logout ${address.substring(0, 6)}...${address.substring(address.length - 4)}`}
-                            {!authenticated &&
-                                address &&
-                                `Disconnect ${address.substring(0, 6)}...${address.substring(address.length - 4)}`}
+                            {authenticated && address && `Logout ${abbreviateAddress(address)}`}
+                            {!authenticated && address && `Disconnect ${abbreviateAddress(address)}`}
                         </span>
                     </Button>
                 </div>

@@ -2,19 +2,20 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { http } from "viem"
-import { mainnet, sepolia, polygonAmoy } from "viem/chains"
+import { rootstock, rootstockTestnet } from "viem/chains"
 
 import type { PrivyClientConfig } from "@privy-io/react-auth"
 import { PrivyProvider } from "@privy-io/react-auth"
 import { WagmiProvider, createConfig } from "@privy-io/wagmi"
+import { ALCHEMY_RPC_RSKTEST, PRIVY_APP_ID_RSKTEST } from "@/constants"
 
 const queryClient = new QueryClient()
 
 export const wagmiConfig = createConfig({
-    chains: [sepolia], //mainnet
+    chains: [rootstockTestnet],
     transports: {
-        // [mainnet.id]: http(`${process.env.NEXT_PUBLIC_ALCHEMY_MAINNET}`),
-        [sepolia.id]: http(`${process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA}`),
+        // [rootstock.id]: http(`${ALCHEMY_RPC_RSKMAIN}`),
+        [rootstockTestnet.id]: http(`${ALCHEMY_RPC_RSKTEST}`),
     },
 })
 
@@ -36,7 +37,7 @@ export default function PrivyProviders({ children }: { children: React.ReactNode
         <PrivyProvider
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID_SEPOLIA as string}
+            appId={PRIVY_APP_ID_RSKTEST as string}
             config={privyConfig}
         >
             <QueryClientProvider client={queryClient}>

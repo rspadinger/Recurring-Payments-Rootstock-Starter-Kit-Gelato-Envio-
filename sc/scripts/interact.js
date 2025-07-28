@@ -21,7 +21,8 @@ async function main() {
         console.log("Total Payments: ", await recPay.totalPayments())
         console.log("Last Paid: ", await recPay.lastPaid())
 
-        console.log("Active: ", await recPay.active())
+        //console.log("Status: ", await recPay.status())
+        console.log("Amount: ", await recPay.amount())
         console.log("Start Time: ", await recPay.startTime())
         console.log("Balance: ", await await ethers.provider.getBalance(plan))
         console.log("Block.timestamp: ", (await ethers.provider.getBlock("latest")).timestamp)

@@ -10,6 +10,17 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { Info, Calendar, Clock, Wallet, DollarSign } from "lucide-react"
+import { toast } from "sonner"
+
+// @ts-expect-error working fine
+import { useAccount, useBalance, useWriteContract, useConfig } from "wagmi"
+import { waitForTransactionReceipt } from "wagmi/actions"
+import { erc20Abi, zeroAddress, isAddress, formatUnits, parseUnits } from "viem"
+import { usePrivy } from "@privy-io/react-auth"
+
+import { convertToWei, convertToSeconds } from "@/lib/utils"
+import { contractType } from "@/constants"
+import { useContractWrite } from "@/lib/contracts/useContractWrite"
 
 interface FormData {
     recipient: string
@@ -23,11 +34,19 @@ interface FormData {
 }
 
 export default function HomePage() {
+    const { user, ready, authenticated } = usePrivy()
+    const { address } = useAccount()
+    const wagmiConfig = useConfig()
+    const { executeWrite, isLoading, status: stat1, txHash } = useContractWrite()
+
     const [recipientError, setRecipientError] = useState("")
     const [paymentAmountError, setPaymentAmountError] = useState("")
     const [intervalDurationError, setIntervalDurationError] = useState("")
     const [startTimeError, setStartTimeError] = useState("")
     const [fundingAmountError, setFundingAmountError] = useState("")
+
+    const [isCreatingPlan, setIsCreatingPlan] = useState(false)
+    const [status, setStatus] = useState("")
 
     const [formData, setFormData] = useState<FormData>({
         recipient: "",
@@ -155,39 +174,6 @@ export default function HomePage() {
         return ""
     }
 
-    // Unit conversion functions
-    const convertToWei = (amount: string, unit: "wei" | "gwei" | "eth"): string => {
-        const num = Number.parseFloat(amount)
-        if (isNaN(num)) return "0"
-
-        switch (unit) {
-            case "wei":
-                return Math.floor(num).toString()
-            case "gwei":
-                return Math.floor(num * 1e9).toString()
-            case "eth":
-                return Math.floor(num * 1e18).toString()
-            default:
-                return "0"
-        }
-    }
-
-    const convertToSeconds = (duration: string, unit: string): number => {
-        const num = Number.parseFloat(duration)
-        if (isNaN(num)) return 0
-
-        const multipliers = {
-            seconds: 1,
-            minutes: 60,
-            hours: 3600,
-            days: 86400,
-            weeks: 604800,
-            months: 2592000, // 30 days
-        }
-
-        return num * multipliers[unit as keyof typeof multipliers]
-    }
-
     const handleRecipientChange = (value: string) => {
         setFormData((prev) => ({ ...prev, recipient: value }))
         const error = validateRecipient(value)
@@ -256,12 +242,14 @@ export default function HomePage() {
         )
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleCreatePlan = async (e: React.FormEvent) => {
         e.preventDefault()
 
         if (!validateAllFields()) {
             return
         }
+
+        if (!address || isCreatingPlan) return
 
         // Convert values for smart contract
         const paymentAmountWei = convertToWei(formData.paymentAmount, formData.paymentUnit)
@@ -269,18 +257,40 @@ export default function HomePage() {
         const intervalSeconds = convertToSeconds(formData.intervalDuration, formData.intervalUnit)
         const startTimeUnix = Math.floor(new Date(formData.startTime).getTime() / 1000)
 
-        const contractData = {
-            recipient: formData.recipient,
-            paymentAmountWei,
-            intervalSeconds,
-            startTimeUnix,
-            fundingAmountWei,
-        }
+        setStatus("Creating recurring payment plan...")
 
-        console.log("Payment Plan Data:", contractData)
-        alert(
-            `Payment plan created!\n\nRecipient: ${formData.recipient}\nPayment: ${formData.paymentAmount} ${formData.paymentUnit} (${paymentAmountWei} wei)\nInterval: ${formData.intervalDuration} ${formData.intervalUnit} (${intervalSeconds} seconds)\nStart: ${formData.startTime}\nFunding: ${formData.fundingAmount} ${formData.fundingUnit} (${fundingAmountWei} wei)`
-        )
+        try {
+            setIsCreatingPlan(true)
+
+            const { result: createPlanHash, status: createPlanStatus } = await executeWrite({
+                contract: contractType.RecurringPaymentFactory,
+                functionName: "createPlan", //"setAmount",
+                args: [formData.recipient, paymentAmountWei, intervalSeconds, startTimeUnix], //args: [4n],
+                value: fundingAmountWei, //value: 0n,
+                //overrideAddress: "0x64748677Bde4c2eEd203Be4E2432De8CB9019593",
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!createPlanHash) {
+                if (createPlanStatus && createPlanStatus.includes("User denied the transaction.")) return
+
+                toast.error(createPlanStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: createPlanHash })
+            toast.success("Recurring payment plan created successfully!")
+        } catch (err) {
+            console.log("Error creating plan:", err)
+            toast.error("Failed to create inheritance plan")
+        } finally {
+            setIsCreatingPlan(false)
+            setStatus("")
+        }
     }
 
     return (
@@ -290,7 +300,7 @@ export default function HomePage() {
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-foreground mb-4">Create a Recurring Payment Plan</h1>
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                        This Dapp lets you schedule automatic recurring payments to any wallet address using ETH.
+                        This Dapp lets you schedule automatic recurring payments to any wallet address using Rootstock.
                         Specify an amount, time interval, and funding — we'll take care of the rest.
                     </p>
                 </div>
@@ -305,7 +315,7 @@ export default function HomePage() {
                         <CardDescription>Configure your recurring payment schedule and funding details</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleCreatePlan} className="space-y-6">
                             {/* Recipient Section */}
                             <div className="space-y-2">
                                 <Label htmlFor="recipient" className="flex items-center gap-2">
@@ -316,7 +326,7 @@ export default function HomePage() {
                                             <Info className="h-4 w-4 text-muted-foreground tooltip-trigger" />
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>The Ethereum wallet address that will receive the recurring payments</p>
+                                            <p>The Rootstock wallet address that will receive the recurring payments</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </Label>
@@ -363,7 +373,7 @@ export default function HomePage() {
                                         <SelectContent>
                                             <SelectItem value="wei">Wei</SelectItem>
                                             <SelectItem value="gwei">Gwei</SelectItem>
-                                            <SelectItem value="eth">ETH</SelectItem>
+                                            <SelectItem value="eth">RBTC</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
@@ -483,19 +493,34 @@ export default function HomePage() {
                                         <SelectContent>
                                             <SelectItem value="wei">Wei</SelectItem>
                                             <SelectItem value="gwei">Gwei</SelectItem>
-                                            <SelectItem value="eth">ETH</SelectItem>
+                                            <SelectItem value="eth">RBTC</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
                             </div>
+
+                            {/* Status Message */}
+                            {status && (
+                                <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                                    <div className="flex items-start space-x-3">
+                                        <Info className="h-5 w-5 text-cyan-500 mt-0.5" />
+                                        <div>
+                                            <h4 className="font-medium text-foreground">{status}</h4>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Submit Button */}
                             <div className="pt-4">
                                 <Button
                                     type="submit"
                                     className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
-                                    disabled={!isFormValid()}
+                                    disabled={!isFormValid() || isCreatingPlan}
                                 >
+                                    {isCreatingPlan && (
+                                        <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                    )}
                                     Create Plan
                                 </Button>
                             </div>

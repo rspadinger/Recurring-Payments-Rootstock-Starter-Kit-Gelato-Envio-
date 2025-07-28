@@ -193,7 +193,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     /// @return canExec True if payment should be executed now
     /// @return execPayload payload for call to executePayment
     function checkPayment() external view returns (bool canExec, bytes memory execPayload) {
-        bool shouldPay = (active &&
+        bool shouldPay = (status == PlanStatus.Active &&
             address(this).balance >= amount &&
             (lastPaid == 0 ? block.timestamp >= startTime : block.timestamp >= lastPaid + interval));
 
@@ -206,7 +206,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
 
     /// @notice Get timestamp of next payment
     function getNextPaymentTime() external view returns (uint256) {
-        if (!active) return 0;
+        if (status != PlanStatus.Active) return 0;
         if (lastPaid == 0) return startTime;
         return lastPaid + interval;
     }

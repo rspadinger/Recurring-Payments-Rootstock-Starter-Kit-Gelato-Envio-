@@ -154,3 +154,41 @@
 .tooltip-trigger {
     cursor: help;
 }
+
+/* Payment plan card styling */
+.plan-card {
+    background: linear-gradient(135deg, #f0fdff 0%, #e0f7fa 100%);
+    border: 1px solid #b2ebf2;
+}
+
+.plan-card-header {
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    border-bottom: 1px solid #80cbc4;
+}
+
+.status-active {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    border-color: #81c784;
+}
+
+.status-paused {
+    background: linear-gradient(135deg, #fff8e1 0%, #ffecb3 100%);
+    border-color: #ffb74d;
+}
+
+.status-canceled {
+    background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+    border-color: #e57373;
+}
+
+.empty-state-card {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    border: 1px solid #ce93d8;
+}
+
+.editable-section {
+    background: linear-gradient(135deg, #f1f8e9 0%, #dcedc8 100%);
+    border: 1px solid #aed581;
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
