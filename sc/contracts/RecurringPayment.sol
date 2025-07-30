@@ -19,7 +19,6 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     uint256 public amount;
     uint256 public interval;
     uint256 public startTime;
-    //bool public active;
     bytes32 public taskId;
 
     enum PlanStatus {
@@ -47,8 +46,8 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     event PlanPaused(address indexed plan, address indexed payer, uint256 timestamp);
     event PlanUnpaused(address indexed plan, address indexed payer, uint256 timestamp);
     event PlanCancelled(address indexed plan, address indexed payer, uint256 refundedAmount, uint256 timestamp);
-    event FundsAdded(address indexed plan, address indexed payer, uint256 amount, uint256 timestamp);
-    event FundsReceived(address indexed plan, address indexed payer, uint256 amount, uint256 timestamp);
+    event FundsAdded(address indexed plan, , address indexed planOwner, address indexed payer, uint256 amount, uint256 timestamp);
+    event FundsReceived(address indexed plan, address indexed planOwner, address indexed payer, uint256 amount, uint256 timestamp);
 
     modifier onlyFactory() {
         require(msg.sender == factory, "Not Factory");
@@ -72,7 +71,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
 
     /// @notice Handle funds sent via plain transfer/send or EOA
     receive() external payable {
-        emit FundsReceived(address(this), msg.sender, msg.value, block.timestamp);
+        emit FundsReceived(address(this), payer, msg.sender, msg.value, block.timestamp);
     }
 
     /// @notice Initializes the recurring payment plan with user-defined parameters.
@@ -130,7 +129,7 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
     /// @dev This could be extended to support ERC20 tokens for funding and payments. Function can be called by any address
     function addFunds() external payable {
         require(msg.value > 0, "No funding was provided");
-        emit FundsAdded(address(this), msg.sender, msg.value, block.timestamp);
+        emit FundsAdded(address(this), payer, msg.sender, msg.value, block.timestamp);
     }
 
     /// @notice Cancel a recurring payment plan (only the owner can)

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Wallet, Home, Gift, Moon, Sun, Package } from "lucide-react"
+import { Wallet, Home, Moon, Sun, Package, BarChart3 } from "lucide-react"
 import { usePrivy } from "@privy-io/react-auth"
 // @ts-expect-error working fine
 import { useAccount, useDisconnect } from "wagmi"
@@ -42,15 +42,27 @@ export default function Header() {
                     </Link>
 
                     {ready && user && (
-                        <Link
-                            href="/plans"
-                            className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
-                        >
-                            <span className="flex items-center">
-                                <Package className="mr-1 h-4 w-4" />
-                                My Plans
-                            </span>
-                        </Link>
+                        <div className="flex gap-4">
+                            <Link
+                                href="/plans"
+                                className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
+                            >
+                                <span className="flex items-center">
+                                    <Package className="mr-1 h-4 w-4" />
+                                    My Plans
+                                </span>
+                            </Link>
+
+                            <Link
+                                href="/overview"
+                                className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
+                            >
+                                <span className="flex items-center">
+                                    <BarChart3 className="mr-1 h-4 w-4" />
+                                    Overview
+                                </span>
+                            </Link>
+                        </div>
                     )}
                 </nav>
 

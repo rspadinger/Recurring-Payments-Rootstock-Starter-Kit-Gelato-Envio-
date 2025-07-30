@@ -48,11 +48,18 @@ async function main() {
         console.log("Recurring payment plan created.")
     }
 
-    // pause plan
+    // change amount
     if (false) {
         tx = await plan.pausePlan()
         await tx.wait()
         console.log("Plan paused.")
+    }
+
+    // pause plan
+    if (true) {
+        tx = await plan.setAmount(100)
+        await tx.wait()
+        console.log("Amount changed!")
     }
 
     // unpause plan

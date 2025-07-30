@@ -1,23 +1,14 @@
 "use client"
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { http } from "viem"
-import { rootstock, rootstockTestnet } from "viem/chains"
 
 import type { PrivyClientConfig } from "@privy-io/react-auth"
 import { PrivyProvider } from "@privy-io/react-auth"
-import { WagmiProvider, createConfig } from "@privy-io/wagmi"
-import { ALCHEMY_RPC_RSKTEST, PRIVY_APP_ID_RSKTEST } from "@/constants"
+import { WagmiProvider } from "@privy-io/wagmi"
+import { PRIVY_APP_ID_RSKTEST } from "@/constants"
+import { wagmiConfig } from "./wagmiConfig"
 
 const queryClient = new QueryClient()
-
-export const wagmiConfig = createConfig({
-    chains: [rootstockTestnet],
-    transports: {
-        // [rootstock.id]: http(`${ALCHEMY_RPC_RSKMAIN}`),
-        [rootstockTestnet.id]: http(`${ALCHEMY_RPC_RSKTEST}`),
-    },
-})
 
 export const privyConfig: PrivyClientConfig = {
     embeddedWallets: {

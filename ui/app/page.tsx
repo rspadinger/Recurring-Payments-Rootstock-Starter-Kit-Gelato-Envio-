@@ -15,7 +15,6 @@ import { toast } from "sonner"
 // @ts-expect-error working fine
 import { useAccount, useBalance, useWriteContract, useConfig } from "wagmi"
 import { waitForTransactionReceipt } from "wagmi/actions"
-import { erc20Abi, zeroAddress, isAddress, formatUnits, parseUnits } from "viem"
 import { usePrivy } from "@privy-io/react-auth"
 
 import { convertToWei, convertToSeconds } from "@/lib/utils"
@@ -37,7 +36,7 @@ export default function HomePage() {
     const { user, ready, authenticated } = usePrivy()
     const { address } = useAccount()
     const wagmiConfig = useConfig()
-    const { executeWrite, isLoading, status: stat1, txHash } = useContractWrite()
+    const { executeWrite } = useContractWrite()
 
     const [recipientError, setRecipientError] = useState("")
     const [paymentAmountError, setPaymentAmountError] = useState("")
@@ -264,10 +263,9 @@ export default function HomePage() {
 
             const { result: createPlanHash, status: createPlanStatus } = await executeWrite({
                 contract: contractType.RecurringPaymentFactory,
-                functionName: "createPlan", //"setAmount",
-                args: [formData.recipient, paymentAmountWei, intervalSeconds, startTimeUnix], //args: [4n],
-                value: fundingAmountWei, //value: 0n,
-                //overrideAddress: "0x64748677Bde4c2eEd203Be4E2432De8CB9019593",
+                functionName: "createPlan",
+                args: [formData.recipient, paymentAmountWei, intervalSeconds, startTimeUnix],
+                value: fundingAmountWei,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -298,16 +296,16 @@ export default function HomePage() {
             <div className="container mx-auto px-4 py-8 max-w-4xl">
                 {/* Page Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-foreground mb-4">Create a Recurring Payment Plan</h1>
+                    <h1 className="text-3xl font-bold text-foreground mb-4">Create a Recurring Payment Plan</h1>
                     <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                         This Dapp lets you schedule automatic recurring payments to any wallet address using Rootstock.
-                        Specify an amount, time interval, and funding — we'll take care of the rest.
+                        Specify an amount, time interval, and funding.
                     </p>
                 </div>
 
                 {/* Payment Plan Form */}
-                <Card className="w-full">
-                    <CardHeader>
+                <Card className="w-full plan-card">
+                    <CardHeader className="pb-3 pt-3 plan-card-header">
                         <CardTitle className="flex items-center gap-2">
                             <DollarSign className="h-5 w-5" />
                             Payment Plan Configuration
@@ -317,7 +315,7 @@ export default function HomePage() {
                     <CardContent>
                         <form onSubmit={handleCreatePlan} className="space-y-6">
                             {/* Recipient Section */}
-                            <div className="space-y-2">
+                            <div className="space-y-2 border-t pt-6">
                                 <Label htmlFor="recipient" className="flex items-center gap-2">
                                     <Wallet className="h-4 w-4" />
                                     Recipient Wallet Address
@@ -344,7 +342,10 @@ export default function HomePage() {
                             {/* Payment Amount Section */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="paymentAmount">Payment Amount per Interval</Label>
+                                    <Label htmlFor="paymentAmount" className="flex items-center gap-2">
+                                        <DollarSign className="h-4 w-4" />
+                                        Payment Amount per Interval
+                                    </Label>
                                     <Input
                                         id="paymentAmount"
                                         type="number"
@@ -455,6 +456,7 @@ export default function HomePage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="fundingAmount" className="flex items-center gap-2">
+                                        <DollarSign className="h-4 w-4" />
                                         Initial Funding Amount
                                         <Tooltip>
                                             <TooltipTrigger asChild>

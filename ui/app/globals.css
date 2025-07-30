@@ -161,9 +161,19 @@
     border: 1px solid #b2ebf2;
 }
 
+.dark .plan-card {
+    background: linear-gradient(135deg, #0d1f21 0%, #102f31 100%);
+    border: 1px solid #274c4f;
+}
+
 .plan-card-header {
     background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
     border-bottom: 1px solid #80cbc4;
+}
+
+.dark .plan-card-header {
+    background: linear-gradient(135deg, #103433 0%, #1b4745 100%);
+    border-bottom: 1px solid #2c5c59;
 }
 
 .status-active {
@@ -182,8 +192,13 @@
 }
 
 .empty-state-card {
-    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    background: linear-gradient(135deg, #f3e5f5 0%, #eacaef 100%);
     border: 1px solid #ce93d8;
+}
+
+.dark .empty-state-card {
+    background: linear-gradient(135deg, #2b2230 0%, #3a2c44 100%);
+    border: 1px solid #7e57c2;
 }
 
 .editable-section {
@@ -191,4 +206,9 @@
     border: 1px solid #aed581;
     border-radius: 0.5rem;
     padding: 1rem;
+}
+
+.dark .editable-section {
+    background: linear-gradient(135deg, #1d2b1f 0%, #30452b 100%);
+    border: 1px solid #7cb342;
 }

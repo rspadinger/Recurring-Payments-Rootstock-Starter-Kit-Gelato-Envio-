@@ -1,6 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { usePrivy } from "@privy-io/react-auth"
+// @ts-expect-error working fine
+import { useAccount, useConfig } from "wagmi"
+import { waitForTransactionReceipt } from "wagmi/actions"
+import { contractType } from "@/constants"
+import { useContractWrite } from "@/lib/contracts/useContractWrite"
+import { usePaymentPlans } from "@/hooks/usePaymentPlans"
+
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -35,52 +43,28 @@ import {
     abbreviateAddress,
 } from "@/lib/utils"
 
-interface PaymentPlan {
-    planAddress: string
-    balance: string
-    status: number
-    recipient: string
-    numberOfPayments: number
-    totalAmountOfPayment: string
-    firstPayment: number
-    lastPayment: number
-    paymentInterval: number
-    paymentAmount: string
-}
-
-const mockPlans: PaymentPlan[] = [
-    {
-        planAddress: "0xAbC1234567890000000000000000000000000001",
-        balance: "250000000000000000", // 0.25 ETH
-        status: 0,
-        recipient: "0xDeF9876543210000000000000000000000000002",
-        numberOfPayments: 3,
-        totalAmountOfPayment: "300000000000000", // 0.0003 ETH
-        firstPayment: 1721223000,
-        lastPayment: 1721226000,
-        paymentInterval: 3600,
-        paymentAmount: "100000000000000", // 0.0001 ETH
-    },
-    {
-        planAddress: "0x1230000000000000000000000000000000009999",
-        balance: "1000000000000000000", // 1 ETH
-        status: 1,
-        recipient: "0x8888888888888888888888888888888888888888",
-        numberOfPayments: 5,
-        totalAmountOfPayment: "500000000000000000", // 0.5 ETH
-        firstPayment: 1721230000,
-        lastPayment: 1721240000,
-        paymentInterval: 86400,
-        paymentAmount: "100000000000000000", // 0.1 ETH
-    },
-]
-
 export default function PaymentPlansPage() {
-    const [plans, setPlans] = useState<PaymentPlan[]>(mockPlans)
+    const { authenticated } = usePrivy()
+    const { address } = useAccount()
+    const { data: paymentPlans, isLoading, isError } = usePaymentPlans()
+    const wagmiConfig = useConfig()
+    const { executeWrite } = useContractWrite()
+
+    const [plans, setPlans] = useState<PaymentPlan[]>([])
+    const [status, setStatus] = useState("")
+    const [isUpdatingAmount, setIsUpdatingAmount] = useState(false)
+    const [isUpdatingInterval, setIsUpdatingInterval] = useState(false)
+
     const [editingInterval, setEditingInterval] = useState<string | null>(null)
     const [editingAmount, setEditingAmount] = useState<string | null>(null)
     const [intervalValues, setIntervalValues] = useState<Record<string, { duration: string; unit: string }>>({})
     const [amountValues, setAmountValues] = useState<Record<string, { amount: string; unit: string }>>({})
+
+    useEffect(() => {
+        if (!isLoading && paymentPlans && !isError) {
+            setPlans(paymentPlans)
+        }
+    }, [isLoading, isError, paymentPlans])
 
     const getStatusInfo = (status: number) => {
         switch (status) {
@@ -131,7 +115,9 @@ export default function PaymentPlansPage() {
         }
     }
 
-    const saveIntervalChange = (planAddress: string) => {
+    const saveIntervalChange = async (planAddress: string) => {
+        if (!address || isUpdatingInterval) return
+
         const values = intervalValues[planAddress]
         if (!values) return
 
@@ -152,14 +138,48 @@ export default function PaymentPlansPage() {
         )
 
         setEditingInterval(null)
-        toast.success("Payment interval updated successfully!")
+
+        setStatus("Updating payment interval for recurring payment plan...")
+
+        try {
+            setIsUpdatingInterval(true)
+
+            const { result: updateIntervalHash, status: updateIntervalStatus } = await executeWrite({
+                contract: contractType.RecurringPayment,
+                functionName: "setInterval",
+                args: [totalSeconds],
+                overrideAddress: planAddress,
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!updateIntervalHash) {
+                if (updateIntervalStatus?.includes("User denied")) return
+                toast.error(updateIntervalStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: updateIntervalHash })
+            toast.success("Payment interval updated successfully!")
+        } catch (err) {
+            console.log("Error updating payment interval:", err)
+            toast.error("Failed to update payment interval")
+        } finally {
+            setIsUpdatingInterval(false)
+            setStatus("")
+        }
     }
 
-    const saveAmountChange = (planAddress: string) => {
+    const saveAmountChange = async (planAddress: string) => {
+        if (!address || isUpdatingAmount) return
+
         const values = amountValues[planAddress]
         if (!values) return
 
-        const amount = Number.parseFloat(values.amount)
+        const amount = Number.parseFloat(values.amount.trim())
         if (isNaN(amount) || amount <= 0) {
             toast.error("Invalid payment amount")
             return
@@ -172,7 +192,39 @@ export default function PaymentPlansPage() {
         )
 
         setEditingAmount(null)
-        toast.success("Payment amount updated successfully!")
+
+        setStatus("Updating payment amount for recurring payment plan...")
+
+        try {
+            setIsUpdatingAmount(true)
+
+            const { result: updateAmountHash, status: updateAmountStatus } = await executeWrite({
+                contract: contractType.RecurringPayment,
+                functionName: "setAmount",
+                args: [weiAmount],
+                overrideAddress: planAddress,
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!updateAmountHash) {
+                if (updateAmountStatus?.includes("User denied")) return
+                toast.error(updateAmountStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: updateAmountHash })
+            toast.success("Payment amount updated successfully!")
+        } catch (err) {
+            console.log("Error updating payment amount:", err)
+            toast.error("Failed to update payment amount")
+        } finally {
+            setIsUpdatingAmount(false)
+            setStatus("")
+        }
     }
 
     const cancelEdit = () => {
@@ -180,12 +232,55 @@ export default function PaymentPlansPage() {
         setEditingAmount(null)
     }
 
+    // Show connection prompt if not authenticated
+    if (!authenticated || !address) {
+        return (
+            <div className="app-background container mx-auto px-4 py-8 md:py-12">
+                <div className="text-center max-w-2xl mx-auto">
+                    <h1 className="text-4xl font-bold text-foreground mb-4">Automate Your Crypto Payments</h1>
+                    <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                        Create and manage recurring payment plans on-chain. Send scheduled crypto payments to anyone,
+                        effortlessly and securely. Connect your wallet to get started and take full control of your
+                        recurring transactions.
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="app-background container mx-auto px-4 py-8 md:py-12">
+                <div className="text-center max-w-2xl mx-auto">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-6"></div>
+                    <h1 className="text-3xl font-bold mb-4">Loading Your Recurring Payment Plans</h1>
+                    <p className="text-muted-foreground">Searching the blockchain for recurring payment plans...</p>
+                </div>
+            </div>
+        )
+    }
+
+    // Error
+    if (isError) {
+        return (
+            <div className="app-background container mx-auto px-4 py-8 md:py-12">
+                <div className="text-center max-w-2xl mx-auto">
+                    <h1 className="text-3xl font-bold mb-4 text-red-500">Error Loading Plans</h1>
+                    <p className="text-muted-foreground">
+                        There was a problem loading your recurring payment plans. Please try again later.
+                    </p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <TooltipProvider>
             <div className="container mx-auto px-4 py-8 max-w-6xl">
                 {/* Page Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-foreground mb-4">Your Recurring Payment Plans</h1>
+                    <h1 className="text-3xl font-bold text-foreground mb-4">Your Recurring Payment Plans</h1>
                     <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
                         View and manage your existing recurring payment plans. Update payment intervals, change payment
                         amounts, and monitor performance.
@@ -194,7 +289,7 @@ export default function PaymentPlansPage() {
 
                 {/* Plans Listing */}
                 <div className="space-y-6">
-                    {plans.length === 0 ? (
+                    {plans?.length === 0 ? (
                         <Card className="text-center py-12 empty-state-card">
                             <CardContent>
                                 <div className="flex flex-col items-center space-y-4">
@@ -222,7 +317,7 @@ export default function PaymentPlansPage() {
 
                             return (
                                 <Card key={plan.planAddress} className="w-full plan-card">
-                                    <CardHeader className="pb-0 plan-card-header">
+                                    <CardHeader className="pb-2 pt-2 plan-card-header">
                                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                                             <div className="space-y-2">
                                                 <CardTitle className="flex items-center gap-2 text-lg">
@@ -431,6 +526,7 @@ export default function PaymentPlansPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
+                                                                    disabled={isUpdatingInterval}
                                                                     onClick={() => handleIntervalEdit(plan.planAddress)}
                                                                 >
                                                                     Change Interval
@@ -520,6 +616,7 @@ export default function PaymentPlansPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
+                                                                    disabled={isUpdatingAmount}
                                                                     onClick={() => handleAmountEdit(plan.planAddress)}
                                                                 >
                                                                     Change Amount
@@ -530,6 +627,18 @@ export default function PaymentPlansPage() {
                                                 </div>
                                             </div>
                                         </div>
+
+                                        {/* Status Message */}
+                                        {status && (
+                                            <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                                                <div className="flex items-start space-x-3">
+                                                    <Info className="h-5 w-5 text-cyan-500 mt-0.5" />
+                                                    <div>
+                                                        <h4 className="font-medium text-foreground">{status}</h4>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
                             )
