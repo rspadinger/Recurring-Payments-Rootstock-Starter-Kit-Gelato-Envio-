@@ -36,7 +36,7 @@ export default function PaymentOverviewPage() {
                                 <Wallet className="h-16 w-16 text-cyan-400" />
                                 <h3 className="text-xl font-semibold">No Payment Plans Yet</h3>
                                 <p className="text-muted-foreground max-w-md">
-                                    You haven't created any recurring payment plans yet.
+                                    {"You haven't created any recurring payment plans yet."}
                                 </p>
                                 <Link href="/">
                                     <Button className="bg-cyan-500 hover:bg-cyan-600 text-white">
