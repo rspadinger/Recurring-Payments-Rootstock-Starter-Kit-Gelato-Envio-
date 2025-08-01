@@ -18,6 +18,7 @@ type PlanDetails = {
     lastPayment: number | null
     paymentInterval: number
     paymentAmount: string
+    title: string
 }
 
 export const usePaymentPlans = () => {
@@ -34,37 +35,34 @@ export const usePaymentPlans = () => {
             if (!address) return []
 
             // 1. Fetch all plans for the connected user
-            const { RecurringPaymentFactory_PlanCreated: plans_ql } = await graphqlClient.request(GET_PLANS_BY_PAYER, {
+            const { RecurringPaymentFactory_PlanCreated: plans } = await graphqlClient.request(GET_PLANS_BY_PAYER, {
                 payer: address,
             })
 
-            if (!plans_ql.length) return []
+            if (!plans.length) return []
 
             // 2. Fetch data for each plan in parallel
             const planDetails = await Promise.all(
-                plans_ql.map(async ({ planAddress, recipient }) => {
+                plans.map(async ({ plan, recipient, title }) => {
                     // Read ETH balance
                     const balance = await getBalance(wagmiConfig, {
-                        address: planAddress,
+                        address: plan,
                     })
 
-                    //@note add status call !
                     // Read contract values
-                    const status = 0
-                    //const [status, paymentAmount, paymentInterval] = await Promise.all([
-                    const [paymentAmount, paymentInterval] = await Promise.all([
-                        // await readContract(wagmiConfig, {
-                        //     address: planAddress,
-                        //     abi,
-                        //     functionName: "status",
-                        // }),
+                    const [planStatus, paymentAmount, paymentInterval] = await Promise.all([
                         await readContract(wagmiConfig, {
-                            address: planAddress,
+                            address: plan,
+                            abi,
+                            functionName: "status",
+                        }),
+                        await readContract(wagmiConfig, {
+                            address: plan,
                             abi,
                             functionName: "amount",
                         }),
                         await readContract(wagmiConfig, {
-                            address: planAddress,
+                            address: plan,
                             abi,
                             functionName: "interval",
                         }),
@@ -74,23 +72,24 @@ export const usePaymentPlans = () => {
                     const { RecurringPayment_PaymentExecuted_aggregate } = await graphqlClient.request(
                         GET_PAYMENT_DETAILS_BY_PLAN,
                         {
-                            plan: planAddress,
+                            plan: plan,
                         }
                     )
 
                     const agg = RecurringPayment_PaymentExecuted_aggregate.aggregate
 
                     return {
-                        planAddress,
+                        planAddress: plan,
                         recipient,
                         balance: balance?.value.toString(),
-                        status: Number(status),
+                        status: Number(planStatus),
                         paymentAmount: paymentAmount.toString(),
                         paymentInterval: Number(paymentInterval),
                         numberOfPayments: agg.count,
                         totalAmountOfPayment: agg.sum?.amount ?? "0",
                         firstPayment: agg.min?.timestamp ?? null,
                         lastPayment: agg.max?.timestamp ?? null,
+                        title,
                     }
                 })
             )

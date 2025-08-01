@@ -6,7 +6,7 @@ export const CONTRACTS = {
         abi: RecurringPaymentFactoryAbi,
         addresses: {
             30: "", // RSK Mainnet
-            31: "0xe6f758beBD1298f94D43ba8bd2a6802B8f0535A7", // RSK Testnet
+            31: process.env.NEXT_PUBLIC_PAYMENT_FACTORY_ADDRESS_31 || "", // RSK Testnet
         },
     },
     RecurringPayment: {

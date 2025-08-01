@@ -22,7 +22,12 @@ export const usePaymentTotals = () => {
             const res = await graphqlClient.request(GET_TOTAL_PAYMENTS_BY_PAYER, {
                 payer: address,
             })
-            return res.RecurringPayment_PaymentExecuted_aggregate.aggregate
+
+            //simulate delay for testing
+            //await new Promise((resolve) => setTimeout(resolve, 3000))
+
+            const agg = res?.RecurringPayment_PaymentExecuted_aggregate?.aggregate
+            return agg || { sum: { amount: "0" }, count: 0 }
         },
     })
 }

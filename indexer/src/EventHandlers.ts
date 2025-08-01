@@ -27,23 +27,15 @@ RecurringPayment.AmountUpdated.handler(async ({ event, context }) => {
     context.RecurringPayment_AmountUpdated.set(entity)
 })
 
-RecurringPayment.FundsAdded.handler(async ({ event, context }) => {
-    const entity: RecurringPayment_FundsAdded = {
-        id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-        payer: event.params.payer,
-        amount: event.params.amount,
-        timestamp: event.params.timestamp,
-    }
-
-    context.RecurringPayment_FundsAdded.set(entity)
-})
-
 RecurringPayment.FundsReceived.handler(async ({ event, context }) => {
     const entity: RecurringPayment_FundsReceived = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+        plan: event.params.plan,
+        planOwner: event.params.planOwner,
         payer: event.params.payer,
         amount: event.params.amount,
         timestamp: event.params.timestamp,
+        title: event.params.title,
     }
 
     context.RecurringPayment_FundsReceived.set(entity)
@@ -63,11 +55,12 @@ RecurringPayment.IntervalUpdated.handler(async ({ event, context }) => {
 RecurringPayment.PaymentExecuted.handler(async ({ event, context }) => {
     const entity: RecurringPayment_PaymentExecuted = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-        planAddress: event.params.planAddress,
+        plan: event.params.plan,
         payer: event.params.payer,
         recipient: event.params.recipient,
         amount: event.params.amount,
         timestamp: event.params.timestamp,
+        title: event.params.title,
     }
 
     context.RecurringPayment_PaymentExecuted.set(entity)
@@ -87,7 +80,7 @@ RecurringPayment.PaymentTaskCreated.handler(async ({ event, context }) => {
 RecurringPayment.PlanCancelled.handler(async ({ event, context }) => {
     const entity: RecurringPayment_PlanCancelled = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-        planAddress: event.params.planAddress,
+        plan: event.params.plan,
         payer: event.params.payer,
         refundedAmount: event.params.refundedAmount,
         timestamp: event.params.timestamp,
@@ -100,6 +93,8 @@ RecurringPayment.PlanPaused.handler(async ({ event, context }) => {
     const entity: RecurringPayment_PlanPaused = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
         plan: event.params.plan,
+        payer: event.params.payer,
+        timestamp: event.params.timestamp,
     }
 
     context.RecurringPayment_PlanPaused.set(entity)
@@ -109,20 +104,37 @@ RecurringPayment.PlanUnpaused.handler(async ({ event, context }) => {
     const entity: RecurringPayment_PlanUnpaused = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
         plan: event.params.plan,
+        payer: event.params.payer,
+        timestamp: event.params.timestamp,
     }
 
     context.RecurringPayment_PlanUnpaused.set(entity)
 })
 
+RecurringPayment.FundsAdded.handler(async ({ event, context }) => {
+    const entity: RecurringPayment_FundsAdded = {
+        id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+        plan: event.params.plan,
+        planOwner: event.params.planOwner,
+        payer: event.params.payer,
+        amount: event.params.amount,
+        timestamp: event.params.timestamp,
+        title: event.params.title,
+    }
+
+    context.RecurringPayment_FundsAdded.set(entity)
+})
+
 RecurringPaymentFactory.PlanCreated.handler(async ({ event, context }) => {
     const entity: RecurringPaymentFactory_PlanCreated = {
         id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-        planAddress: event.params.planAddress,
+        plan: event.params.plan,
         payer: event.params.payer,
         recipient: event.params.recipient,
         amount: event.params.amount,
         interval: event.params.interval,
         startTime: event.params.startTime,
+        title: event.params.title,
     }
 
     context.RecurringPaymentFactory_PlanCreated.set(entity)
@@ -131,7 +143,7 @@ RecurringPaymentFactory.PlanCreated.handler(async ({ event, context }) => {
 // Register RecurringPayment contracts whenever they're created by the factory
 RecurringPaymentFactory.PlanCreated.contractRegister(async ({ event, context }) => {
     // Register the new Plan contract using its address from the event
-    context.addRecurringPayment(event.params.planAddress)
+    context.addRecurringPayment(event.params.plan)
 
-    context.log.info(`Registered new Plan at ${event.params.planAddress}`)
+    context.log.info(`Registered new Plan at ${event.params.plan}`)
 })

@@ -15,12 +15,13 @@ contract RecurringPaymentFactory is Ownable {
     mapping(address => address[]) public recipientToPlans;
 
     event PlanCreated(
-        address indexed planAddress,
+        address indexed plan,
         address indexed payer,
         address indexed recipient,
         uint256 amount,
         uint256 interval,
-        uint256 startTime
+        uint256 startTime,
+        string title
     );
 
     /// @notice Deploys the implementation contract for RecurringPayment with factory and Gelato automation addresses.
@@ -34,12 +35,20 @@ contract RecurringPaymentFactory is Ownable {
     /// @param _amount The amount to be paid in each interval (in wei).
     /// @param _interval The time interval (in seconds) between payments.
     /// @param _startTime The timestamp from which payments start.
-    function createPlan(address _recipient, uint256 _amount, uint256 _interval, uint256 _startTime) external payable {
+    /// @param _title The title of the payment plan.
+    function createPlan(
+        address _recipient,
+        uint256 _amount,
+        uint256 _interval,
+        uint256 _startTime,
+        string memory _title
+    ) external payable {
         require(_recipient != address(0), "Invalid recipient");
         require(_amount >= 10, "Payment amount must be at least 10 wei");
         require(_interval >= 60, "Payment interval must be at least 1 minute");
         require(_startTime >= block.timestamp, "Start time must be in the future");
         require(msg.value >= _amount, "Insufficient initial funding");
+        require(bytes(_title).length <= 60, "Title too long");
 
         address plan = Clones.clone(recurringPaymentImplementation);
 
@@ -51,10 +60,11 @@ contract RecurringPaymentFactory is Ownable {
             _recipient,
             _amount,
             _interval,
-            _startTime
+            _startTime,
+            _title
         );
 
-        emit PlanCreated(plan, msg.sender, _recipient, _amount, _interval, _startTime);
+        emit PlanCreated(plan, msg.sender, _recipient, _amount, _interval, _startTime, _title);
     }
 
     /// @notice Returns the list of recurring payment plans created by the caller (payer).

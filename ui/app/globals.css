@@ -155,6 +155,26 @@
     cursor: help;
 }
 
+.connect-button {
+    background-color: #06b6d4; /* cyan-500 */
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.connect-button:hover {
+    background-color: #0891b2; /* cyan-600 */
+}
+
+.dark .connect-button {
+    background-color: #102f31;
+    color: white;
+    border: 1px solid #274c4f;
+}
+
+.dark .connect-button:hover {
+    background-color: #326064; /* cyan-600 */
+}
+
 /* Payment plan card styling */
 .plan-card {
     background: linear-gradient(135deg, #f0fdff 0%, #e0f7fa 100%);

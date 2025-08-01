@@ -3,14 +3,15 @@ import { gql } from "graphql-request"
 // const { RecurringPaymentFactory_PlanCreated: plans_ql } = await graphqlClient.request(GET_PLANS_BY_PAYER, {
 //     payer: "0xB1b504848e1a5e90aEAA1D03A06ECEee55562803",
 // })
-//console.log("DATA: ", plans_ql[0].amount) // .recipient .planAddress
+//console.log("DATA: ", plans_ql[0].amount) // .recipient .plan
 export const GET_PLANS_BY_PAYER = gql`
     query GetPlansByPayer($payer: String!) {
         RecurringPaymentFactory_PlanCreated(where: { payer: { _eq: $payer } }) {
             amount
             interval
-            planAddress
+            plan
             recipient
+            title
         }
     }
 `
@@ -22,7 +23,7 @@ export const GET_PLANS_BY_PAYER = gql`
 //console.log("Plan details: ", planDetails_ql.aggregate.sum.amount) //.count .sum.amount .max.timestamp .min.timestamp
 export const GET_PAYMENT_DETAILS_BY_PLAN = gql`
     query GetPaymentDetailsByPlan($plan: String!) {
-        RecurringPayment_PaymentExecuted_aggregate(where: { planAddress: { _eq: $plan } }) {
+        RecurringPayment_PaymentExecuted_aggregate(where: { plan: { _eq: $plan } }) {
             aggregate {
                 count
                 sum {
@@ -52,24 +53,38 @@ export const GET_TOTAL_PAYMENTS_BY_PAYER = gql`
     }
 `
 
-export const GET_PAYMENTS_DETAILS_BY_PAYER = gql`
+export const GET_PAYMENT_DETAILS_BY_PAYER = gql`
     query GetPaymentsDetailsByPayer($payer: String!) {
         RecurringPayment_PaymentExecuted(where: { payer: { _eq: $payer } }) {
-            planAddress
+            plan
             amount
             recipient
             timestamp
+            title
         }
     }
 `
 
-export const GET_FUNDING_DETAILS_BY_PAYER = gql`
-    query GetFundingDetailsByPayer($payer: String!) {
-        RecurringPayment_FundsAdded(where: { planOwner: { _eq: $payer } }) {
+export const GET_PAYMENT_DETAILS_BY_RECIPIENT = gql`
+    query GetPaymentsDetailsByRecipient($recipient: String!) {
+        RecurringPayment_PaymentExecuted(where: { recipient: { _eq: $recipient } }) {
+            plan
+            amount
+            payer
+            timestamp
+            title
+        }
+    }
+`
+
+export const GET_FUNDING_DETAILS_BY_PLAN_OWNER = gql`
+    query GetFundingDetailsByPlanOwner($planOwner: String!) {
+        RecurringPayment_FundsAdded(where: { planOwner: { _eq: $planOwner } }) {
             plan
             payer
             amount
             timestamp
+            title
         }
     }
 `
@@ -86,8 +101,8 @@ export const GET_RECIPIENTS_BY_PAYER = gql`
 
 export const GET_PLANS_BY_PAYER_FROM_EXECUTED = gql`
     query GetPlansByPayerFromExecuted($payer: String!) {
-        RecurringPayment_PaymentExecuted(distinct_on: planAddress, where: { payer: { _eq: $payer } }) {
-            planAddress
+        RecurringPayment_PaymentExecuted(distinct_on: plan, where: { payer: { _eq: $payer } }) {
+            plan
         }
     }
 `
@@ -118,12 +133,12 @@ export const GET_FILTERED_PAYMENTS_DETAILS_BY_PAYER = gql`
         RecurringPayment_PaymentExecuted(
             where: {
                 payer: { _eq: $payer }
-                planAddress: { _in: $plans }
+                plan: { _in: $plans }
                 recipient: { _in: $recipients }
                 timestamp: { _gte: $start, _lte: $end }
             }
         ) {
-            planAddress
+            plan
             amount
             recipient
             timestamp

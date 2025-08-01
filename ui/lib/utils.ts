@@ -5,13 +5,18 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge" //merge conflicting TailwindCSS classes (e.g., p-2 and p-4 → resolves to p-4
 import { toast } from "sonner"
+import { ChevronDown, ChevronUp } from "lucide-react"
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
 }
 
 // Utility functions for the payment plans
-export const formatWeiAmount = (weiAmount: string): { value: string; unit: string } => {
+export const formatWeiAmount = (weiAmount: string | null | undefined): { value: string; unit: string } => {
+    if (!weiAmount) {
+        return { value: "0", unit: "eth" } // or whatever default you prefer
+    }
+
     const wei = BigInt(weiAmount)
     const gwei = Number(wei) / 1e9
     const eth = Number(wei) / 1e18
@@ -89,7 +94,8 @@ export const convertToWei = (amount: string, unit: "wei" | "gwei" | "eth"): stri
     }
 }
 
-export const abbreviateAddress = (address: string): string => {
+export const abbreviateAddress = (address?: string): string => {
+    if (!address) return ""
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`
 }
 

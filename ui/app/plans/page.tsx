@@ -8,6 +8,7 @@ import { waitForTransactionReceipt } from "wagmi/actions"
 import { contractType } from "@/constants"
 import { useContractWrite } from "@/lib/contracts/useContractWrite"
 import { usePaymentPlans } from "@/hooks/usePaymentPlans"
+import PageState from "@/components/common/page-state"
 
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -32,6 +33,9 @@ import {
     XCircle,
     PauseCircle,
     CheckCheck,
+    Pause,
+    Play,
+    X,
 } from "lucide-react"
 
 import {
@@ -41,10 +45,25 @@ import {
     convertToSeconds,
     convertToWei,
     abbreviateAddress,
+    copyToClipboard,
 } from "@/lib/utils"
 
+interface PaymentPlan {
+    planAddress: string
+    balance: string
+    status: number
+    recipient: string
+    numberOfPayments: number
+    totalAmountOfPayment: string
+    firstPayment: number
+    lastPayment: number
+    paymentInterval: number
+    paymentAmount: string
+    title?: string
+}
+
 export default function PaymentPlansPage() {
-    const { authenticated } = usePrivy()
+    const { authenticated, ready } = usePrivy()
     const { address } = useAccount()
     const { data: paymentPlans, isLoading, isError } = usePaymentPlans()
     const wagmiConfig = useConfig()
@@ -54,6 +73,10 @@ export default function PaymentPlansPage() {
     const [status, setStatus] = useState("")
     const [isUpdatingAmount, setIsUpdatingAmount] = useState(false)
     const [isUpdatingInterval, setIsUpdatingInterval] = useState(false)
+    const [isPausing, setIsPausing] = useState(false)
+    const [isResuming, setIsResuming] = useState(false)
+    const [isCanceling, setIsCanceling] = useState(false)
+    const [updatingPlanAddress, setUpdatingPlanAddress] = useState<string | null>(null)
 
     const [editingInterval, setEditingInterval] = useState<string | null>(null)
     const [editingAmount, setEditingAmount] = useState<string | null>(null)
@@ -76,15 +99,6 @@ export default function PaymentPlansPage() {
                 return { label: "Canceled", variant: "destructive" as const, icon: XCircle, color: "text-red-600" }
             default:
                 return { label: "Unknown", variant: "outline" as const, icon: Activity, color: "text-gray-600" }
-        }
-    }
-
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text)
-            toast.success("Address copied to clipboard!")
-        } catch (err) {
-            toast.error("Failed to copy address")
         }
     }
 
@@ -115,6 +129,135 @@ export default function PaymentPlansPage() {
         }
     }
 
+    const handlePause = async (planAddress: string) => {
+        if (!address || isPausing) return
+
+        setStatus("Pausing recurring payment plan...")
+
+        try {
+            setIsPausing(true)
+            setUpdatingPlanAddress(planAddress)
+
+            const { result: pauseHash, status: pauseStatus } = await executeWrite({
+                contract: contractType.RecurringPayment,
+                functionName: "pausePlan",
+                args: [],
+                overrideAddress: planAddress,
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!pauseHash) {
+                if (pauseStatus?.includes("User denied")) return
+                toast.error(pauseStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: pauseHash })
+
+            // Update local state
+            setPlans((prev) => prev.map((plan) => (plan.planAddress === planAddress ? { ...plan, status: 1 } : plan)))
+
+            toast.success("Payment plan paused successfully!")
+        } catch (err) {
+            console.log("Error pausing plan:", err)
+            toast.error("Failed to pause payment plan")
+        } finally {
+            setIsPausing(false)
+            setUpdatingPlanAddress(null)
+            setStatus("")
+        }
+    }
+
+    const handleResume = async (planAddress: string) => {
+        if (!address || isResuming) return
+
+        setStatus("Resuming recurring payment plan...")
+
+        try {
+            setIsResuming(true)
+            setUpdatingPlanAddress(planAddress)
+
+            const { result: resumeHash, status: resumeStatus } = await executeWrite({
+                contract: contractType.RecurringPayment,
+                functionName: "resumePlan",
+                args: [],
+                overrideAddress: planAddress,
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!resumeHash) {
+                if (resumeStatus?.includes("User denied")) return
+                toast.error(resumeStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: resumeHash })
+
+            // Update local state
+            setPlans((prev) => prev.map((plan) => (plan.planAddress === planAddress ? { ...plan, status: 0 } : plan)))
+
+            toast.success("Payment plan resumed successfully!")
+        } catch (err) {
+            console.log("Error resuming plan:", err)
+            toast.error("Failed to resume payment plan")
+        } finally {
+            setIsResuming(false)
+            setUpdatingPlanAddress(null)
+            setStatus("")
+        }
+    }
+
+    const handleCancel = async (planAddress: string) => {
+        if (!address || isCanceling) return
+
+        setStatus("Canceling recurring payment plan...")
+
+        try {
+            setIsCanceling(true)
+            setUpdatingPlanAddress(planAddress)
+
+            const { result: cancelHash, status: cancelStatus } = await executeWrite({
+                contract: contractType.RecurringPayment,
+                functionName: "cancelPlan",
+                args: [],
+                overrideAddress: planAddress,
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!cancelHash) {
+                if (cancelStatus?.includes("User denied")) return
+                toast.error(cancelStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: cancelHash })
+
+            // Update local state
+            setPlans((prev) => prev.map((plan) => (plan.planAddress === planAddress ? { ...plan, status: 2 } : plan)))
+
+            toast.success("Payment plan canceled successfully!")
+        } catch (err) {
+            console.log("Error canceling plan:", err)
+            toast.error("Failed to cancel payment plan")
+        } finally {
+            setIsCanceling(false)
+            setUpdatingPlanAddress(null)
+            setStatus("")
+        }
+    }
+
     const saveIntervalChange = async (planAddress: string) => {
         if (!address || isUpdatingInterval) return
 
@@ -142,6 +285,7 @@ export default function PaymentPlansPage() {
         setStatus("Updating payment interval for recurring payment plan...")
 
         try {
+            setUpdatingPlanAddress(planAddress)
             setIsUpdatingInterval(true)
 
             const { result: updateIntervalHash, status: updateIntervalStatus } = await executeWrite({
@@ -169,6 +313,7 @@ export default function PaymentPlansPage() {
             toast.error("Failed to update payment interval")
         } finally {
             setIsUpdatingInterval(false)
+            setUpdatingPlanAddress(null)
             setStatus("")
         }
     }
@@ -196,6 +341,7 @@ export default function PaymentPlansPage() {
         setStatus("Updating payment amount for recurring payment plan...")
 
         try {
+            setUpdatingPlanAddress(planAddress)
             setIsUpdatingAmount(true)
 
             const { result: updateAmountHash, status: updateAmountStatus } = await executeWrite({
@@ -224,6 +370,7 @@ export default function PaymentPlansPage() {
         } finally {
             setIsUpdatingAmount(false)
             setStatus("")
+            setUpdatingPlanAddress(null)
         }
     }
 
@@ -232,47 +379,22 @@ export default function PaymentPlansPage() {
         setEditingAmount(null)
     }
 
-    // Show connection prompt if not authenticated
-    if (!authenticated || !address) {
-        return (
-            <div className="app-background container mx-auto px-4 py-8 md:py-12">
-                <div className="text-center max-w-2xl mx-auto">
-                    <h1 className="text-4xl font-bold text-foreground mb-4">Automate Your Crypto Payments</h1>
-                    <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                        Create and manage recurring payment plans on-chain. Send scheduled crypto payments to anyone,
-                        effortlessly and securely. Connect your wallet to get started and take full control of your
-                        recurring transactions.
-                    </p>
-                </div>
-            </div>
-        )
-    }
+    const showFallback = (
+        <PageState
+            ready={ready}
+            authenticated={authenticated}
+            address={address}
+            isLoading={isLoading}
+            isError={isError}
+            loadingTitle="Loading Your Recurring Payment Plans"
+            loadingMessage="Searching the blockchain for recurring payment plans..."
+            errorTitle="Error Loading Plans"
+            errorMessage="There was a problem loading your recurring payment plans. Please try again later."
+        />
+    )
 
-    // Loading state
-    if (isLoading) {
-        return (
-            <div className="app-background container mx-auto px-4 py-8 md:py-12">
-                <div className="text-center max-w-2xl mx-auto">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-6"></div>
-                    <h1 className="text-3xl font-bold mb-4">Loading Your Recurring Payment Plans</h1>
-                    <p className="text-muted-foreground">Searching the blockchain for recurring payment plans...</p>
-                </div>
-            </div>
-        )
-    }
-
-    // Error
-    if (isError) {
-        return (
-            <div className="app-background container mx-auto px-4 py-8 md:py-12">
-                <div className="text-center max-w-2xl mx-auto">
-                    <h1 className="text-3xl font-bold mb-4 text-red-500">Error Loading Plans</h1>
-                    <p className="text-muted-foreground">
-                        There was a problem loading your recurring payment plans. Please try again later.
-                    </p>
-                </div>
-            </div>
-        )
+    if (!ready || !authenticated || !address || isLoading || isError) {
+        return showFallback
     }
 
     return (
@@ -322,21 +444,38 @@ export default function PaymentPlansPage() {
                                             <div className="space-y-2">
                                                 <CardTitle className="flex items-center gap-2 text-lg">
                                                     <Activity className="h-5 w-5 text-cyan-600" />
-                                                    Payment Plan
+                                                    {plan.title || "Untitled Plan"}
+                                                    <div className="flex items-center gap-4 flex-wrap">
+                                                        <div className="flex items-center gap-2">
+                                                            <code className="text-xs bg-muted px-2 py-1 rounded">
+                                                                {abbreviateAddress(plan.planAddress)}
+                                                            </code>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => copyToClipboard(plan.planAddress)}
+                                                                className="h-6 w-6 p-0"
+                                                            >
+                                                                <Copy className="h-3 w-3" />
+                                                            </Button>
+                                                        </div>
+                                                        <div>
+                                                            <Badge
+                                                                variant={statusInfo.variant}
+                                                                className={`flex items-center gap-1 text-gray-800 ${
+                                                                    plan.status === 0
+                                                                        ? "status-active"
+                                                                        : plan.status === 1
+                                                                        ? "status-paused"
+                                                                        : "status-canceled"
+                                                                }`}
+                                                            >
+                                                                <StatusIcon className="h-3 w-3" />
+                                                                {statusInfo.label}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
                                                 </CardTitle>
-                                                <div className="flex items-center gap-2">
-                                                    <code className="text-sm bg-muted px-2 py-1 rounded">
-                                                        {plan.planAddress}
-                                                    </code>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => copyToClipboard(plan.planAddress)}
-                                                        className="h-6 w-6 p-0"
-                                                    >
-                                                        <Copy className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
@@ -345,19 +484,87 @@ export default function PaymentPlansPage() {
                                                         {balanceFormatted.value} {balanceFormatted.unit}
                                                     </p>
                                                 </div>
-                                                <Badge
-                                                    variant={statusInfo.variant}
-                                                    className={`flex items-center gap-1 text-gray-800 ${
-                                                        plan.status === 0
-                                                            ? "status-active"
-                                                            : plan.status === 1
-                                                            ? "status-paused"
-                                                            : "status-canceled"
-                                                    }`}
-                                                >
-                                                    <StatusIcon className="h-3 w-3" />
-                                                    {statusInfo.label}
-                                                </Badge>
+
+                                                {/* Plan Control Buttons */}
+                                                <div className="flex flex-col gap-1">
+                                                    {/* Active Plan */}
+                                                    {plan.status === 0 && (
+                                                        <>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                disabled={
+                                                                    isPausing &&
+                                                                    updatingPlanAddress === plan.planAddress
+                                                                }
+                                                                onClick={() => handlePause(plan.planAddress)}
+                                                                className="h-6 px-2 text-xs"
+                                                            >
+                                                                {isPausing &&
+                                                                    updatingPlanAddress === plan.planAddress && (
+                                                                        <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1" />
+                                                                    )}
+                                                                <Pause className="h-3 w-3 mr-1" />
+                                                                Pause
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                disabled={
+                                                                    isCanceling &&
+                                                                    updatingPlanAddress === plan.planAddress
+                                                                }
+                                                                onClick={() => handleCancel(plan.planAddress)}
+                                                                className="h-6 px-2 mt-1 text-xs bg-gray-200 text-red-600 hover:text-red-700 border-1 border-red-800 hover:border-red-300"
+                                                            >
+                                                                {isCanceling &&
+                                                                    updatingPlanAddress === plan.planAddress && (
+                                                                        <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1" />
+                                                                    )}
+                                                                <X className="h-3 w-3 mr-1" />
+                                                                Cancel
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                    {/* Paused Plan */}
+                                                    {plan.status === 1 && (
+                                                        <>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                disabled={
+                                                                    isResuming &&
+                                                                    updatingPlanAddress === plan.planAddress
+                                                                }
+                                                                onClick={() => handleResume(plan.planAddress)}
+                                                                className="h-6 px-2 text-xs text-green-600 hover:text-green-700 border-green-200 hover:border-green-300"
+                                                            >
+                                                                {isResuming &&
+                                                                    updatingPlanAddress === plan.planAddress && (
+                                                                        <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1" />
+                                                                    )}
+                                                                <Play className="h-3 w-3 mr-1" />
+                                                                Resume
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                disabled={
+                                                                    isCanceling &&
+                                                                    updatingPlanAddress === plan.planAddress
+                                                                }
+                                                                onClick={() => handleCancel(plan.planAddress)}
+                                                                className="h-6 px-2 mt-1 text-xs bg-gray-200 text-red-600 hover:text-red-700 border-1 border-red-800 hover:border-red-300"
+                                                            >
+                                                                {isCanceling &&
+                                                                    updatingPlanAddress === plan.planAddress && (
+                                                                        <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin mr-1" />
+                                                                    )}
+                                                                <X className="h-3 w-3 mr-1" />
+                                                                Cancel
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                    {/* No buttons for canceled plans (status === 2) */}
+                                                </div>
                                             </div>
                                         </div>
                                     </CardHeader>
@@ -526,9 +733,16 @@ export default function PaymentPlansPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
-                                                                    disabled={isUpdatingInterval}
+                                                                    disabled={
+                                                                        isUpdatingInterval &&
+                                                                        updatingPlanAddress === plan.planAddress
+                                                                    }
                                                                     onClick={() => handleIntervalEdit(plan.planAddress)}
                                                                 >
+                                                                    {isUpdatingInterval &&
+                                                                        updatingPlanAddress === plan.planAddress && (
+                                                                            <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                                                        )}
                                                                     Change Interval
                                                                 </Button>
                                                             </div>
@@ -616,9 +830,16 @@ export default function PaymentPlansPage() {
                                                                 <Button
                                                                     size="sm"
                                                                     variant="outline"
-                                                                    disabled={isUpdatingAmount}
+                                                                    disabled={
+                                                                        isUpdatingAmount &&
+                                                                        updatingPlanAddress === plan.planAddress
+                                                                    }
                                                                     onClick={() => handleAmountEdit(plan.planAddress)}
                                                                 >
+                                                                    {isUpdatingAmount &&
+                                                                        updatingPlanAddress === plan.planAddress && (
+                                                                            <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                                                                        )}
                                                                     Change Amount
                                                                 </Button>
                                                             </div>
@@ -629,7 +850,7 @@ export default function PaymentPlansPage() {
                                         </div>
 
                                         {/* Status Message */}
-                                        {status && (
+                                        {status && updatingPlanAddress === plan.planAddress && (
                                             <div className="bg-muted/30 p-4 rounded-lg border border-border">
                                                 <div className="flex items-start space-x-3">
                                                     <Info className="h-5 w-5 text-cyan-500 mt-0.5" />

@@ -9,19 +9,21 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { Info, Calendar, Clock, Wallet, DollarSign } from "lucide-react"
+import { Info, Calendar, Clock, Wallet, DollarSign, FileText } from "lucide-react"
 import { toast } from "sonner"
 
 // @ts-expect-error working fine
-import { useAccount, useBalance, useWriteContract, useConfig } from "wagmi"
+import { useAccount, useConfig } from "wagmi"
 import { waitForTransactionReceipt } from "wagmi/actions"
 import { usePrivy } from "@privy-io/react-auth"
 
+import PageState from "@/components/common/page-state"
 import { convertToWei, convertToSeconds } from "@/lib/utils"
 import { contractType } from "@/constants"
 import { useContractWrite } from "@/lib/contracts/useContractWrite"
 
 interface FormData {
+    title: string
     recipient: string
     paymentAmount: string
     paymentUnit: "wei" | "gwei" | "eth"
@@ -33,7 +35,7 @@ interface FormData {
 }
 
 export default function HomePage() {
-    const { user, ready, authenticated } = usePrivy()
+    const { authenticated, ready } = usePrivy()
     const { address } = useAccount()
     const wagmiConfig = useConfig()
     const { executeWrite } = useContractWrite()
@@ -43,11 +45,13 @@ export default function HomePage() {
     const [intervalDurationError, setIntervalDurationError] = useState("")
     const [startTimeError, setStartTimeError] = useState("")
     const [fundingAmountError, setFundingAmountError] = useState("")
+    const [titleError, setTitleError] = useState("")
 
     const [isCreatingPlan, setIsCreatingPlan] = useState(false)
     const [status, setStatus] = useState("")
 
     const [formData, setFormData] = useState<FormData>({
+        title: "",
         recipient: "",
         paymentAmount: "100",
         paymentUnit: "wei",
@@ -173,6 +177,19 @@ export default function HomePage() {
         return ""
     }
 
+    const validateTitle = (title: string): string => {
+        if (!title.trim()) {
+            return "Plan title is required"
+        }
+        if (title.length > 60) {
+            return "Plan title must not exceed 60 characters"
+        }
+        if (!/^[a-zA-Z0-9\s]+$/.test(title)) {
+            return "Plan title can only contain letters, numbers, and spaces"
+        }
+        return ""
+    }
+
     const handleRecipientChange = (value: string) => {
         setFormData((prev) => ({ ...prev, recipient: value }))
         const error = validateRecipient(value)
@@ -210,29 +227,39 @@ export default function HomePage() {
         setFundingAmountError(error)
     }
 
+    const handleTitleChange = (value: string) => {
+        setFormData((prev) => ({ ...prev, title: value }))
+        const error = validateTitle(value)
+        setTitleError(error)
+    }
+
     const validateAllFields = (): boolean => {
+        const titleErr = validateTitle(formData.title)
         const recipientErr = validateRecipient(formData.recipient)
         const paymentErr = validatePaymentAmount(formData.paymentAmount)
         const intervalErr = validateIntervalDuration(formData.intervalDuration, formData.intervalUnit)
         const startTimeErr = validateStartTime(formData.startTime)
         const fundingErr = validateFundingAmount(formData.fundingAmount)
 
+        setTitleError(titleErr)
         setRecipientError(recipientErr)
         setPaymentAmountError(paymentErr)
         setIntervalDurationError(intervalErr)
         setStartTimeError(startTimeErr)
         setFundingAmountError(fundingErr)
 
-        return !recipientErr && !paymentErr && !intervalErr && !startTimeErr && !fundingErr
+        return !titleErr && !recipientErr && !paymentErr && !intervalErr && !startTimeErr && !fundingErr
     }
 
     const isFormValid = (): boolean => {
         return (
+            !titleError &&
             !recipientError &&
             !paymentAmountError &&
             !intervalDurationError &&
             !startTimeError &&
             !fundingAmountError &&
+            formData.title &&
             formData.recipient &&
             formData.paymentAmount &&
             formData.intervalDuration &&
@@ -264,7 +291,7 @@ export default function HomePage() {
             const { result: createPlanHash, status: createPlanStatus } = await executeWrite({
                 contract: contractType.RecurringPaymentFactory,
                 functionName: "createPlan",
-                args: [formData.recipient, paymentAmountWei, intervalSeconds, startTimeUnix],
+                args: [formData.recipient, paymentAmountWei, intervalSeconds, startTimeUnix, formData.title],
                 value: fundingAmountWei,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
@@ -291,6 +318,14 @@ export default function HomePage() {
         }
     }
 
+    const showFallback = <PageState ready={ready} authenticated={authenticated} address={address} />
+
+    console.log("STAT: ", ready, authenticated, address)
+
+    if (!ready || !authenticated || !address) {
+        return showFallback
+    }
+
     return (
         <TooltipProvider>
             <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -314,8 +349,42 @@ export default function HomePage() {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleCreatePlan} className="space-y-6">
-                            {/* Recipient Section */}
+                            {/* Plan Title Section */}
                             <div className="space-y-2 border-t pt-6">
+                                <Label htmlFor="title" className="flex items-center gap-2">
+                                    <FileText className="h-4 w-4" />
+                                    Plan Title
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="h-4 w-4 text-muted-foreground tooltip-trigger" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>
+                                                A descriptive name for your payment plan (max 60 characters, letters,
+                                                numbers, and spaces only)
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </Label>
+                                <Input
+                                    id="title"
+                                    placeholder="e.g., Monthly Rent Payment, Weekly Allowance..."
+                                    value={formData.title}
+                                    onChange={(e) => handleTitleChange(e.target.value)}
+                                    onBlur={(e) => handleTitleChange(e.target.value)}
+                                    className={titleError ? "border-destructive" : ""}
+                                    maxLength={60}
+                                />
+                                <div className="flex justify-between items-center">
+                                    {titleError && <p className="text-destructive text-xs mt-1">{titleError}</p>}
+                                    <p className="text-xs text-muted-foreground ml-auto">
+                                        {formData.title.length}/60 characters
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Recipient Section */}
+                            <div className="space-y-2">
                                 <Label htmlFor="recipient" className="flex items-center gap-2">
                                     <Wallet className="h-4 w-4" />
                                     Recipient Wallet Address

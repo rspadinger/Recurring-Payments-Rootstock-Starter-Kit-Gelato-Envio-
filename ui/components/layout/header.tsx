@@ -1,9 +1,10 @@
 "use client"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Wallet, Home, Moon, Sun, Package, BarChart3 } from "lucide-react"
+import { Wallet, Home, Moon, Sun, Package, BarChart3, HandCoins } from "lucide-react"
 import { usePrivy } from "@privy-io/react-auth"
 // @ts-expect-error working fine
 import { useAccount, useDisconnect } from "wagmi"
@@ -15,6 +16,24 @@ export default function Header() {
     const { address } = useAccount()
     const { disconnect } = useDisconnect()
     const { setTheme } = useTheme()
+    const pathname = usePathname()
+
+    // Helper function to determine if a link is active
+    const isActiveLink = (href: string) => {
+        if (href === "/") {
+            return pathname === "/"
+        }
+        return pathname.startsWith(href)
+    }
+
+    // Helper function to get link classes
+    const getLinkClasses = (href: string) => {
+        const baseClasses = "transition-colors flex items-center"
+        if (isActiveLink(href)) {
+            return `${baseClasses} text-cyan-600 dark:text-cyan-400 font-medium border-b-2 border-cyan-600 dark:border-cyan-400 pb-1`
+        }
+        return `${baseClasses} text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400`
+    }
 
     return (
         <header>
@@ -31,10 +50,7 @@ export default function Header() {
                 </Link>
 
                 <nav className="hidden md:flex space-x-6 mx-4">
-                    <Link
-                        href="/"
-                        className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
-                    >
+                    <Link href="/" className={getLinkClasses("/")}>
                         <span className="flex items-center">
                             <Home className="mr-1 h-4 w-4" />
                             Home
@@ -42,24 +58,23 @@ export default function Header() {
                     </Link>
 
                     {ready && user && (
-                        <div className="flex gap-4">
-                            <Link
-                                href="/plans"
-                                className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
-                            >
+                        <div className="flex gap-6">
+                            <Link href="/plans" className={getLinkClasses("/plans")}>
                                 <span className="flex items-center">
                                     <Package className="mr-1 h-4 w-4" />
                                     My Plans
                                 </span>
                             </Link>
-
-                            <Link
-                                href="/overview"
-                                className="text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
-                            >
+                            <Link href="/overview" className={getLinkClasses("/overview")}>
                                 <span className="flex items-center">
                                     <BarChart3 className="mr-1 h-4 w-4" />
                                     Overview
+                                </span>
+                            </Link>
+                            <Link href="/received" className={getLinkClasses("/received")}>
+                                <span className="flex items-center">
+                                    <HandCoins className="mr-1 h-4 w-4" />
+                                    Received
                                 </span>
                             </Link>
                         </div>
@@ -90,7 +105,7 @@ export default function Header() {
                             else if (authenticated && address) logout()
                             else if (!authenticated && address) disconnect()
                         }}
-                        className="bg-cyan-500 hover:bg-cyan-600 text-white"
+                        className="connect-button"
                     >
                         <span className="flex items-center">
                             <Wallet className="mr-2 h-4 w-4" />

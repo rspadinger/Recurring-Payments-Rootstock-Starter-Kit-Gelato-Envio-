@@ -1,7 +1,7 @@
 const { OWNER, RECIPIENT, RSK_TESTNET_RPC_URL, WALLET_PRIVATE_KEY } = process.env
 
-const factoryAddress = "0xe6f758beBD1298f94D43ba8bd2a6802B8f0535A7"
-const planAddress = "0x64748677Bde4c2eEd203Be4E2432De8CB9019593"
+const factoryAddress = "0x0C8Fdf41AcF8D4027A537bECE5BCAa3434D92000"
+const planAddress = "0x544751FD0793d1e97f68972008d2e948f4e9557C"
 
 let tx
 
@@ -20,6 +20,7 @@ async function main() {
         console.log("TaskId: ", await recPay.taskId())
         console.log("Total Payments: ", await recPay.totalPayments())
         console.log("Last Paid: ", await recPay.lastPaid())
+        console.log("Status: ", await recPay.status())
 
         //console.log("Status: ", await recPay.status())
         console.log("Amount: ", await recPay.amount())
@@ -56,7 +57,7 @@ async function main() {
     }
 
     // pause plan
-    if (true) {
+    if (false) {
         tx = await plan.setAmount(100)
         await tx.wait()
         console.log("Amount changed!")
@@ -74,6 +75,13 @@ async function main() {
         tx = await plan.cancelPlan()
         await tx.wait()
         console.log("Plan cancelled.")
+    }
+
+    // fund plan
+    if (true) {
+        tx = await plan.addFunds({ value: 50 })
+        await tx.wait()
+        console.log("Plan funded.")
     }
 }
 
