@@ -3,12 +3,12 @@ name: envio-indexer
 networks:
     - id: 31
       rpc_config:
-          url: ${ENVIO_RPC_URL}
+          url: https://rootstock-testnet.g.alchemy.com/v2/rMCknUeYb7-1G_Se-EiAxGnhz4rStkoT
       start_block: 6600000
       contracts:
           - name: RecurringPaymentFactory
             address:
-                - ${ENVIO_PAYMENT_FACTORY_ADDRESS_31}
+                - 0x0C8Fdf41AcF8D4027A537bECE5BCAa3434D92000
             handler: src/EventHandlers.ts
             events:
                 - event: PlanCreated(address indexed plan, address indexed payer, address indexed recipient, uint256 amount, uint256 interval, uint256 startTime, string title)

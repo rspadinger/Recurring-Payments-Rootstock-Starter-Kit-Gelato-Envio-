@@ -6,7 +6,7 @@ import { usePrivy } from "@privy-io/react-auth"
 import { useAccount, useConfig } from "wagmi"
 import { waitForTransactionReceipt } from "wagmi/actions"
 import { contractType } from "@/constants"
-import { useContractWrite } from "@/lib/contracts/useContractWrite"
+import { useContractWrite } from "@/hooks/useContractWrite"
 import { usePaymentPlans } from "@/hooks/usePaymentPlans"
 import PageState from "@/components/common/page-state"
 

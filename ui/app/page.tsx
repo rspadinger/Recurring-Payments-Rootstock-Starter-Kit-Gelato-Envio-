@@ -20,7 +20,7 @@ import { usePrivy } from "@privy-io/react-auth"
 import PageState from "@/components/common/page-state"
 import { convertToWei, convertToSeconds } from "@/lib/utils"
 import { contractType } from "@/constants"
-import { useContractWrite } from "@/lib/contracts/useContractWrite"
+import { useContractWrite } from "@/hooks/useContractWrite"
 
 interface FormData {
     title: string

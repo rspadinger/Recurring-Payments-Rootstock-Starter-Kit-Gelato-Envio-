@@ -3,7 +3,7 @@
 // @ts-expect-error working fine
 import { useReadContract } from "wagmi"
 import { useState, useEffect } from "react"
-import { getContractABI, getContractAddress, useEnsureCorrectChain } from "@/lib/contracts/utils"
+import { getContractABI, getContractAddress, useEnsureCorrectChain } from "@/lib/web3/utils"
 import { ContractType, ALLOWED_CHAIN_IDS } from "@/constants"
 
 export const useContractRead = ({

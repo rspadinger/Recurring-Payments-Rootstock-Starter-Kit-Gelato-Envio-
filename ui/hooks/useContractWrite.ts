@@ -4,7 +4,7 @@ import { useState } from "react"
 // @ts-expect-error working fine
 import { useWriteContract } from "wagmi"
 import { ContractType, ALLOWED_CHAIN_IDS } from "@/constants"
-import { getContractABI, getContractAddress, useEnsureCorrectChain } from "@/lib/contracts/utils"
+import { getContractABI, getContractAddress, useEnsureCorrectChain } from "@/lib/web3/utils"
 
 export const useContractWrite = () => {
     const { writeContractAsync } = useWriteContract()

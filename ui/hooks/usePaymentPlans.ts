@@ -2,10 +2,14 @@ import { useQuery } from "@tanstack/react-query"
 import { useAccount } from "wagmi"
 import { getBalance, readContract } from "@wagmi/core"
 import { graphqlClient } from "@/lib/graphql/client"
-import { GET_PLANS_BY_PAYER, GET_PAYMENT_DETAILS_BY_PLAN } from "@/lib/graphql/queries"
+import {
+    GET_PLANS_BY_PAYER,
+    GET_PAYMENT_DETAILS_BY_PLAN,
+    GET_PAYMENT_DETAILS_BY_PLAN_AGGR,
+} from "@/lib/graphql/queries"
 import { wagmiConfig } from "@/lib/web3/wagmiConfig"
 import { contractType } from "@/constants"
-import { getContractABI } from "@/lib/contracts/utils"
+import { getContractABI } from "@/lib/web3/utils"
 
 type PlanDetails = {
     planAddress: string
@@ -68,15 +72,42 @@ export const usePaymentPlans = () => {
                         }),
                     ])
 
-                    // Get GraphQL aggregate data
-                    const { RecurringPayment_PaymentExecuted_aggregate } = await graphqlClient.request(
+                    // Get payment details for each plan
+                    const { RecurringPayment_PaymentExecuted } = await graphqlClient.request(
                         GET_PAYMENT_DETAILS_BY_PLAN,
                         {
                             plan: plan,
                         }
                     )
+                    const payments = RecurringPayment_PaymentExecuted ?? []
 
-                    const agg = RecurringPayment_PaymentExecuted_aggregate.aggregate
+                    // Manual aggregation
+                    const numberOfPayments = payments.length
+
+                    const totalAmountOfPayment = payments
+                        .reduce((acc, p) => acc + BigInt(p.amount), BigInt(0))
+                        .toString()
+
+                    const timestamps = payments.map((p) => Number(p.timestamp))
+                    const firstPayment = timestamps.length > 0 ? Math.min(...timestamps) : null
+                    const lastPayment = timestamps.length > 0 ? Math.max(...timestamps) : null
+
+                    // *************** AGGREGATE QUERIES ***************
+
+                    // cannot be used with the free Envio developer plan, however, they can be used on a local deployment with Hasura
+
+                    // const { RecurringPayment_PaymentExecuted_aggregate } = await graphqlClient.request(
+                    //     GET_PAYMENT_DETAILS_BY_PLAN_AGGR,
+                    //     {
+                    //         plan: plan,
+                    //     }
+                    // )
+                    // const payments = RecurringPayment_PaymentExecuted_aggregate.aggregate
+
+                    // const numberOfPayments = agg.count
+                    // const totalAmountOfPayment = agg.sum?.amount ?? "0"
+                    // const firstPayment = agg.min?.timestamp ?? null
+                    // const lastPayment = agg.max?.timestamp ?? null
 
                     return {
                         planAddress: plan,
@@ -85,10 +116,10 @@ export const usePaymentPlans = () => {
                         status: Number(planStatus),
                         paymentAmount: paymentAmount.toString(),
                         paymentInterval: Number(paymentInterval),
-                        numberOfPayments: agg.count,
-                        totalAmountOfPayment: agg.sum?.amount ?? "0",
-                        firstPayment: agg.min?.timestamp ?? null,
-                        lastPayment: agg.max?.timestamp ?? null,
+                        numberOfPayments,
+                        totalAmountOfPayment,
+                        firstPayment,
+                        lastPayment,
                         title,
                     }
                 })
