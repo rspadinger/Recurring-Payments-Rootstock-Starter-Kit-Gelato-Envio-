@@ -6,7 +6,7 @@ import { GET_PAYMENT_DETAILS_BY_PAYER, GET_PAYMENT_DETAILS_BY_RECIPIENT } from "
 type PaymentDetails = {
     plan: string
     amount: string
-    recipient: string
+    recipientOrPayer: string
     timestamp: number
     title: string
 }
@@ -36,7 +36,7 @@ export const usePaymentDetails = (displayPayer: bool) => {
                     const { recipient, payer, ...rest } = item
                     return {
                         ...rest,
-                        recipient: displayPayer ? payer : recipient,
+                        recipientOrPayer: displayPayer ? payer : recipient,
                     }
                 })
 

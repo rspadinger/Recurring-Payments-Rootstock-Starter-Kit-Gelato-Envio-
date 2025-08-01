@@ -20,22 +20,22 @@ import { Spinner } from "@/components/ui/spinner"
 interface Payment {
     plan: string
     amount: string
-    recipient: string
+    recipientOrPayer: string
     timestamp: number
     title: string
 }
 
-type SortField = "plan" | "amount" | "recipient" | "timestamp"
+type SortField = "plan" | "amount" | "recipientOrPayer" | "timestamp"
 type SortDirection = "asc" | "desc"
 
-export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient", displayPayer }) {
+export default function PaymentDetailsAccordionItem({ addressColumn = "RecipientOrPayer", displayPayer }) {
     const { data: rawPayments, isLoading, isError } = usePaymentDetails(displayPayer)
 
     // State
     const [sortField, setSortField] = useState<SortField>("timestamp")
     const [sortDirection, setSortDirection] = useState<SortDirection>("desc")
     const [selectedPlans, setSelectedPlans] = useState<string[]>([])
-    const [selectedRecipients, setSelectedRecipients] = useState<string[]>([])
+    const [selectedRecipientOrPayers, setSelectedRecipientOrPayers] = useState<string[]>([])
     const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
         start: null,
         end: null,
@@ -43,7 +43,7 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
 
     // UI state
     const [planFilterOpen, setPlanFilterOpen] = useState(false)
-    const [recipientFilterOpen, setRecipientFilterOpen] = useState(false)
+    const [recipientOrPayerFilterOpen, setRecipientOrPayerFilterOpen] = useState(false)
     const [startDateOpen, setStartDateOpen] = useState(false)
     const [endDateOpen, setEndDateOpen] = useState(false)
 
@@ -57,7 +57,7 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
 
     // Extract unique values for filters
     const planes = useMemo(() => [...new Set(payments?.map((p) => p.plan))], [payments])
-    const recipientAddresses = useMemo(() => [...new Set(payments?.map((p) => p.recipient))], [payments])
+    const recipientOrPayerAddresses = useMemo(() => [...new Set(payments?.map((p) => p.recipientOrPayer))], [payments])
 
     // Sorting function
     const handleSort = (field: SortField) => {
@@ -77,8 +77,8 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
                 return false
             }
 
-            // Recipient filter
-            if (selectedRecipients.length > 0 && !selectedRecipients.includes(payment.recipient)) {
+            // RecipientOrPayer filter
+            if (selectedRecipientOrPayers.length > 0 && !selectedRecipientOrPayers.includes(payment.recipientOrPayer)) {
                 return false
             }
 
@@ -111,7 +111,7 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
         })
 
         return filtered
-    }, [payments, selectedPlans, selectedRecipients, dateRange, sortField, sortDirection])
+    }, [payments, selectedPlans, selectedRecipientOrPayers, dateRange, sortField, sortDirection])
 
     // Filter handlers
     const handlePlanSelection = (plan: string, checked: boolean) => {
@@ -122,11 +122,11 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
         }
     }
 
-    const handleRecipientSelection = (recipient: string, checked: boolean) => {
+    const handleRecipientOrPayerSelection = (recipientOrPayer: string, checked: boolean) => {
         if (checked) {
-            setSelectedRecipients([...selectedRecipients, recipient])
+            setSelectedRecipientOrPayers([...selectedRecipientOrPayers, recipientOrPayer])
         } else {
-            setSelectedRecipients(selectedRecipients.filter((r) => r !== recipient))
+            setSelectedRecipientOrPayers(selectedRecipientOrPayers.filter((r) => r !== recipientOrPayer))
         }
     }
 
@@ -138,17 +138,17 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
         }
     }
 
-    const handleSelectAllRecipients = () => {
-        if (selectedRecipients.length === recipientAddresses.length) {
-            setSelectedRecipients([])
+    const handleSelectAllRecipientOrPayers = () => {
+        if (selectedRecipientOrPayers.length === recipientOrPayerAddresses.length) {
+            setSelectedRecipientOrPayers([])
         } else {
-            setSelectedRecipients([...recipientAddresses])
+            setSelectedRecipientOrPayers([...recipientOrPayerAddresses])
         }
     }
 
     const clearFilters = () => {
         setSelectedPlans([])
-        setSelectedRecipients([])
+        setSelectedRecipientOrPayers([])
         setDateRange({ start: null, end: null })
     }
 
@@ -223,13 +223,14 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
                                 </PopoverContent>
                             </Popover>
 
-                            {/* Recipient Filter */}
-                            <Popover open={recipientFilterOpen} onOpenChange={setRecipientFilterOpen}>
+                            {/* RecipientOrPayer Filter */}
+                            <Popover open={recipientOrPayerFilterOpen} onOpenChange={setRecipientOrPayerFilterOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" size="sm" className="h-8 bg-transparent">
                                         {addressColumn}
                                         {"s "}
-                                        {selectedRecipients.length > 0 && `(${selectedRecipients.length})`}
+                                        {selectedRecipientOrPayers.length > 0 &&
+                                            `(${selectedRecipientOrPayers.length})`}
                                         <ChevronDown className="h-3 w-3 ml-1" />
                                     </Button>
                                 </PopoverTrigger>
@@ -237,25 +238,29 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
                                     <div className="space-y-3">
                                         <div className="flex items-center justify-between">
                                             <h4 className="font-medium">Filter by {addressColumn}s</h4>
-                                            <Button variant="ghost" size="sm" onClick={handleSelectAllRecipients}>
-                                                {selectedRecipients.length === recipientAddresses.length
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={handleSelectAllRecipientOrPayers}
+                                            >
+                                                {selectedRecipientOrPayers.length === recipientOrPayerAddresses.length
                                                     ? "Unselect All"
                                                     : "Select All"}
                                             </Button>
                                         </div>
                                         <Separator />
                                         <div className="space-y-2 max-h-48 overflow-y-auto">
-                                            {recipientAddresses.map((address) => (
+                                            {recipientOrPayerAddresses.map((address) => (
                                                 <div key={address} className="flex items-center space-x-2">
                                                     <Checkbox
-                                                        id={`recipient-${address}`}
-                                                        checked={selectedRecipients.includes(address)}
+                                                        id={`recipientOrPayer-${address}`}
+                                                        checked={selectedRecipientOrPayers.includes(address)}
                                                         onCheckedChange={(checked) =>
-                                                            handleRecipientSelection(address, checked as boolean)
+                                                            handleRecipientOrPayerSelection(address, checked as boolean)
                                                         }
                                                     />
                                                     <Label
-                                                        htmlFor={`recipient-${address}`}
+                                                        htmlFor={`recipientOrPayer-${address}`}
                                                         className="text-sm font-mono"
                                                     >
                                                         {abbreviateAddress(address)}
@@ -310,7 +315,7 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
 
                             {/* Clear Filters */}
                             {(selectedPlans.length > 0 ||
-                                selectedRecipients.length > 0 ||
+                                selectedRecipientOrPayers.length > 0 ||
                                 dateRange.start ||
                                 dateRange.end) && (
                                 <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8">
@@ -362,12 +367,12 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    onClick={() => handleSort("recipient")}
+                                                    onClick={() => handleSort("recipientOrPayer")}
                                                     className="h-8 p-0 font-medium"
                                                 >
                                                     {addressColumn}
                                                     <SortIcon
-                                                        field="recipient"
+                                                        field="recipientOrPayer"
                                                         sortField={sortField}
                                                         sortDirection={sortDirection}
                                                     />
@@ -417,12 +422,14 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <code className="text-xs bg-muted px-2 py-1 rounded">
-                                                                {abbreviateAddress(payment.recipient)}
+                                                                {abbreviateAddress(payment.recipientOrPayer)}
                                                             </code>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
-                                                                onClick={() => copyToClipboard(payment.recipient)}
+                                                                onClick={() =>
+                                                                    copyToClipboard(payment.recipientOrPayer)
+                                                                }
                                                                 className="h-6 w-6 p-0"
                                                             >
                                                                 <Copy className="h-3 w-3" />
