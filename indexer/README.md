@@ -8,7 +8,7 @@ _Please refer to the [documentation website](https://docs.envio.dev) for a thoro
 pnpm dev
 ```
 
-Visit http://localhost:8080 to see the GraphQL Playground, local password is `testing`
+Visit http://localhost:8080 to see the GraphQL Playground, local password is `testing`.
 
 ### Generate files from `config.yaml` or `schema.graphql`
 
