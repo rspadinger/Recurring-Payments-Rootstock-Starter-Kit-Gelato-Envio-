@@ -18,7 +18,7 @@ import { Wallet } from "lucide-react"
 export default function PaymentOverviewPage() {
     const { authenticated, ready } = usePrivy()
     const { address } = useAccount()
-    const { data: plans, isLoading, isError } = usePaymentPlans()
+    const { data: plans } = usePaymentPlans()
 
     const showFallback = <PageState ready={ready} authenticated={authenticated} address={address} />
 
@@ -56,7 +56,7 @@ export default function PaymentOverviewPage() {
             {/* Page Header */}
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-foreground mb-4">Payment Overview</h1>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                <p className="hidden md:block text-lg text-muted-foreground max-w-3xl mx-auto">
                     View your payment history, funding activity, and plan-level details in one place.
                 </p>
             </div>

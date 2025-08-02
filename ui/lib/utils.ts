@@ -5,7 +5,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge" //merge conflicting TailwindCSS classes (e.g., p-2 and p-4 → resolves to p-4
 import { toast } from "sonner"
-import { ChevronDown, ChevronUp } from "lucide-react"
 
 export function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs))
@@ -104,6 +103,7 @@ export const copyToClipboard = async (text: string) => {
         await navigator.clipboard.writeText(text)
         toast.success("Copied to clipboard!")
     } catch (err) {
+        console.log("Error: ", err)
         toast.error("Failed to copy")
     }
 }

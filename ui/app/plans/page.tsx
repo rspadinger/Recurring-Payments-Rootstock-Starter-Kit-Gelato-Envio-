@@ -36,6 +36,7 @@ import {
     Pause,
     Play,
     X,
+    Bitcoin,
 } from "lucide-react"
 
 import {
@@ -82,6 +83,9 @@ export default function PaymentPlansPage() {
     const [editingAmount, setEditingAmount] = useState<string | null>(null)
     const [intervalValues, setIntervalValues] = useState<Record<string, { duration: string; unit: string }>>({})
     const [amountValues, setAmountValues] = useState<Record<string, { amount: string; unit: string }>>({})
+
+    const [isFunding, setIsFunding] = useState(false)
+    const [fundingValues, setFundingValues] = useState<Record<string, { amount: string; unit: string }>>({})
 
     useEffect(() => {
         if (!isLoading && paymentPlans && !isError) {
@@ -379,6 +383,64 @@ export default function PaymentPlansPage() {
         setEditingAmount(null)
     }
 
+    const handleFund = async (planAddress: string) => {
+        if (!address || isFunding) return
+
+        const values = fundingValues[planAddress]
+        if (!values) return
+
+        const amount = Number.parseFloat(values.amount.trim())
+        if (isNaN(amount) || amount <= 0) {
+            toast.error("Invalid funding amount")
+            return
+        }
+
+        const weiAmount = convertToWei(values.amount, values.unit as "wei" | "gwei" | "eth")
+
+        setStatus("Funding recurring payment plan...")
+
+        try {
+            setUpdatingPlanAddress(planAddress)
+            setIsFunding(true)
+
+            const { result: fundHash, status: fundStatus } = await executeWrite({
+                contract: contractType.RecurringPayment,
+                functionName: "addFunds",
+                args: [],
+                value: weiAmount,
+                overrideAddress: planAddress,
+                onSuccess: (txnHash) => {
+                    toast.success(`Transaction sent!`)
+                    setStatus(`Txn hash: ${txnHash}`)
+                },
+            })
+
+            if (!fundHash) {
+                if (fundStatus?.includes("User denied")) return
+                toast.error(fundStatus || "Transaction failed")
+                setStatus("Transaction failed")
+                return
+            }
+
+            await waitForTransactionReceipt(wagmiConfig, { hash: fundHash })
+
+            // Clear the funding input after successful funding
+            setFundingValues((prev) => ({
+                ...prev,
+                [planAddress]: { amount: "", unit: "wei" },
+            }))
+
+            toast.success("Payment plan funded successfully!")
+        } catch (err) {
+            console.log("Error funding plan:", err)
+            toast.error("Failed to fund payment plan")
+        } finally {
+            setIsFunding(false)
+            setUpdatingPlanAddress(null)
+            setStatus("")
+        }
+    }
+
     const showFallback = (
         <PageState
             ready={ready}
@@ -403,7 +465,7 @@ export default function PaymentPlansPage() {
                 {/* Page Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-foreground mb-4">Your Recurring Payment Plans</h1>
-                    <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                    <p className="hidden md:block text-lg text-muted-foreground max-w-3xl mx-auto">
                         View and manage your existing recurring payment plans. Update payment intervals, change payment
                         amounts, and monitor performance.
                     </p>
@@ -440,13 +502,13 @@ export default function PaymentPlansPage() {
                             return (
                                 <Card key={plan.planAddress} className="w-full plan-card">
                                     <CardHeader className="pb-2 pt-2 plan-card-header">
-                                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                                        <div className="flex  flex-row items-center justify-between gap-4">
                                             <div className="space-y-2">
                                                 <CardTitle className="flex items-center gap-2 text-lg">
                                                     <Activity className="h-5 w-5 text-cyan-600" />
                                                     {plan.title || "Untitled Plan"}
                                                     <div className="flex items-center gap-4 flex-wrap">
-                                                        <div className="flex items-center gap-2">
+                                                        <div className="hidden sm:flex items-center gap-2">
                                                             <code className="text-xs bg-muted px-2 py-1 rounded">
                                                                 {abbreviateAddress(plan.planAddress)}
                                                             </code>
@@ -569,9 +631,9 @@ export default function PaymentPlansPage() {
                                         </div>
                                     </CardHeader>
 
-                                    <CardContent className="space-y-6">
+                                    <CardContent className="space-y-6 ">
                                         {/* Plan Details */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 border-t pt-6">
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 border-t pt-6">
                                             <div className="space-y-2">
                                                 <Label className="flex items-center gap-2 text-sm font-medium">
                                                     <Wallet className="h-4 w-4 text-cyan-600" />
@@ -595,7 +657,6 @@ export default function PaymentPlansPage() {
                                             <div className="space-y-2">
                                                 <Label className="flex items-center gap-2 text-sm font-medium">
                                                     <CheckCheck className="h-4 w-4" />
-                                                    Payments Made
                                                 </Label>
                                                 <p className="text-lg font-semibold">{plan.numberOfPayments}</p>
                                             </div>
@@ -635,9 +696,9 @@ export default function PaymentPlansPage() {
                                                     Editable Settings
                                                 </h4>
 
-                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                                     {/* Payment Interval */}
-                                                    <div className="space-y-3">
+                                                    <div className="space-y-3 border rounded p-4">
                                                         <Label className="flex items-center gap-2 text-sm font-medium">
                                                             <Clock className="h-4 w-4 text-cyan-600" />
                                                             Payment Interval
@@ -727,7 +788,7 @@ export default function PaymentPlansPage() {
                                                             </div>
                                                         ) : (
                                                             <div className="flex items-center justify-between">
-                                                                <span className="text-sm">
+                                                                <span className="text-sm ">
                                                                     {intervalFormatted.value} {intervalFormatted.unit}
                                                                 </span>
                                                                 <Button
@@ -750,9 +811,9 @@ export default function PaymentPlansPage() {
                                                     </div>
 
                                                     {/* Payment Amount */}
-                                                    <div className="space-y-3">
+                                                    <div className="space-y-3 border rounded p-4">
                                                         <Label className="flex items-center gap-2 text-sm font-medium">
-                                                            <DollarSign className="h-4 w-4 text-cyan-600" />
+                                                            <Bitcoin className="h-4 w-4 text-cyan-600" />
                                                             Payment Amount
                                                         </Label>
 
@@ -762,6 +823,7 @@ export default function PaymentPlansPage() {
                                                                     <Input
                                                                         type="number"
                                                                         step="any"
+                                                                        min="0"
                                                                         placeholder="Amount"
                                                                         value={
                                                                             amountValues[plan.planAddress]?.amount || ""
@@ -798,7 +860,7 @@ export default function PaymentPlansPage() {
                                                                         <SelectContent>
                                                                             <SelectItem value="wei">Wei</SelectItem>
                                                                             <SelectItem value="gwei">Gwei</SelectItem>
-                                                                            <SelectItem value="eth">ETH</SelectItem>
+                                                                            <SelectItem value="eth">RBTC</SelectItem>
                                                                         </SelectContent>
                                                                     </Select>
                                                                 </div>
@@ -844,6 +906,90 @@ export default function PaymentPlansPage() {
                                                                 </Button>
                                                             </div>
                                                         )}
+                                                    </div>
+
+                                                    {/* Funding Amount */}
+                                                    <div className="space-y-3 border rounded p-4">
+                                                        <Label className="flex items-center gap-2 text-sm font-medium">
+                                                            <Bitcoin className="h-4 w-4 text-cyan-600" />
+                                                            Plan Funding
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    <p>
+                                                                        Top up this plan to ensure future payments are
+                                                                        funded
+                                                                    </p>
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </Label>
+
+                                                        <div className="space-y-2">
+                                                            <div className="flex gap-2">
+                                                                <Input
+                                                                    type="number"
+                                                                    step="any"
+                                                                    min="0"
+                                                                    placeholder="Amount"
+                                                                    value={
+                                                                        fundingValues[plan.planAddress]?.amount || ""
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        setFundingValues((prev) => ({
+                                                                            ...prev,
+                                                                            [plan.planAddress]: {
+                                                                                ...prev[plan.planAddress],
+                                                                                amount: e.target.value,
+                                                                            },
+                                                                        }))
+                                                                    }
+                                                                    className="flex-1"
+                                                                />
+                                                                <Select
+                                                                    value={
+                                                                        fundingValues[plan.planAddress]?.unit || "wei"
+                                                                    }
+                                                                    onValueChange={(value) =>
+                                                                        setFundingValues((prev) => ({
+                                                                            ...prev,
+                                                                            [plan.planAddress]: {
+                                                                                ...prev[plan.planAddress],
+                                                                                unit: value,
+                                                                            },
+                                                                        }))
+                                                                    }
+                                                                >
+                                                                    <SelectTrigger className="w-22">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="wei">Wei</SelectItem>
+                                                                        <SelectItem value="gwei">Gwei</SelectItem>
+                                                                        <SelectItem value="eth">RBTC</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+
+                                                                <Button
+                                                                    size="sm"
+                                                                    onClick={() => handleFund(plan.planAddress)}
+                                                                    disabled={
+                                                                        (isFunding &&
+                                                                            updatingPlanAddress === plan.planAddress) ||
+                                                                        !fundingValues[plan.planAddress]?.amount
+                                                                    }
+                                                                    className=" bg-cyan-500 hover:bg-cyan-600 text-white"
+                                                                >
+                                                                    {isFunding &&
+                                                                        updatingPlanAddress === plan.planAddress && (
+                                                                            <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin mr-2" />
+                                                                        )}
+                                                                    <span className="block xl:hidden">Fund</span>
+                                                                    <span className="hidden xl:block">Fund Plan</span>
+                                                                </Button>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

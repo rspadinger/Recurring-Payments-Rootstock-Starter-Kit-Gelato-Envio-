@@ -5,9 +5,7 @@ import { usePrivy } from "@privy-io/react-auth"
 import { useAccount } from "wagmi"
 
 import { Accordion } from "@/components/ui/accordion"
-import TotalPaymentsAccordionItem from "@/components/overview/total-payments-accordion-item"
 import PaymentDetailsAccordionItem from "@/components/overview/payment-details-accordion-item"
-import FundingHistoryAccordionItem from "@/components/overview/funding-history-accordion-item"
 import PageState from "@/components/common/page-state"
 
 export default function PaymentOverviewPage() {
@@ -25,7 +23,7 @@ export default function PaymentOverviewPage() {
             {/* Page Header */}
             <div className="text-center mb-8">
                 <h1 className="text-3xl font-bold text-foreground mb-4">Received Payments</h1>
-                <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                <p className="hidden md:block text-lg text-muted-foreground max-w-3xl mx-auto">
                     Track all incoming payments from your active plans.
                 </p>
             </div>

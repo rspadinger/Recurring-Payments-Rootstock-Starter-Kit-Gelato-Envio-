@@ -110,7 +110,7 @@ export default function FundingHistoryAccordionItem() {
                                                     onClick={() => handleSort("plan")}
                                                     className="h-8 p-0 font-medium"
                                                 >
-                                                    Funded Plan Address
+                                                    Funded Plan
                                                     <SortIcon
                                                         field="plan"
                                                         sortField={sortField}
@@ -172,14 +172,15 @@ export default function FundingHistoryAccordionItem() {
                                                 <TableRow key={index}>
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
-                                                            <code className="text-xs bg-muted px-2 py-1 rounded">
+                                                            <span className="text-sm font-medium">{funding.title}</span>
+                                                            <code className="hidden sm:inline text-xs bg-muted px-2 py-1 rounded">
                                                                 {abbreviateAddress(funding.plan)}
                                                             </code>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 onClick={() => copyToClipboard(funding.plan)}
-                                                                className="h-6 w-6 p-0"
+                                                                className="hidden sm:inline-flex h-6 w-6 p-0"
                                                             >
                                                                 <Copy className="h-3 w-3" />
                                                             </Button>

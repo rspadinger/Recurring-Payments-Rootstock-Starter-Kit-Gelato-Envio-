@@ -1,7 +1,7 @@
 // lib/web3/wagmiConfig.ts
 import { createConfig } from "@privy-io/wagmi"
 import { http } from "viem"
-import { rootstock, rootstockTestnet } from "viem/chains"
+import { rootstockTestnet } from "viem/chains" // mainnet: rootstock
 import { ALCHEMY_RPC_RSKTEST } from "@/constants"
 
 export const wagmiConfig = createConfig({

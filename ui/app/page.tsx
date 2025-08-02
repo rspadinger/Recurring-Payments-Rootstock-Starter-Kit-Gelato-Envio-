@@ -253,18 +253,18 @@ export default function HomePage() {
 
     const isFormValid = (): boolean => {
         return (
-            !titleError &&
-            !recipientError &&
-            !paymentAmountError &&
-            !intervalDurationError &&
-            !startTimeError &&
-            !fundingAmountError &&
-            formData.title &&
-            formData.recipient &&
-            formData.paymentAmount &&
-            formData.intervalDuration &&
-            formData.startTime &&
-            formData.fundingAmount
+            !Boolean(titleError) &&
+            !Boolean(recipientError) &&
+            !Boolean(paymentAmountError) &&
+            !Boolean(intervalDurationError) &&
+            !Boolean(startTimeError) &&
+            !Boolean(fundingAmountError) &&
+            Boolean(formData.title) &&
+            Boolean(formData.recipient) &&
+            Boolean(formData.paymentAmount) &&
+            Boolean(formData.intervalDuration) &&
+            Boolean(formData.startTime) &&
+            Boolean(formData.fundingAmount)
         )
     }
 
@@ -319,8 +319,6 @@ export default function HomePage() {
     }
 
     const showFallback = <PageState ready={ready} authenticated={authenticated} address={address} />
-
-    console.log("STAT: ", ready, authenticated, address)
 
     if (!ready || !authenticated || !address) {
         return showFallback
@@ -409,11 +407,20 @@ export default function HomePage() {
                             </div>
 
                             {/* Payment Amount Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="paymentAmount" className="flex items-center gap-2">
                                         <DollarSign className="h-4 w-4" />
-                                        Payment Amount per Interval
+                                        <span className="block md:hidden">Amount</span>
+                                        <span className="hidden md:block">Payment Amount per Interval</span>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Info className="h-4 w-4 text-muted-foreground tooltip-trigger" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Specify the payment amount per interval</p>
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </Label>
                                     <Input
                                         id="paymentAmount"
@@ -450,17 +457,18 @@ export default function HomePage() {
                             </div>
 
                             {/* Interval Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="intervalDuration" className="flex items-center gap-2">
                                         <Clock className="h-4 w-4" />
-                                        Interval Between Payments
+                                        <span className="block md:hidden">Interval</span> {/* mobile only */}
+                                        <span className="hidden md:block">Interval Between Payments</span>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Info className="h-4 w-4 text-muted-foreground tooltip-trigger" />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>Minimum interval is 60 seconds</p>
+                                                <p>Minimum interval between payments is 60 seconds</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </Label>
@@ -522,11 +530,12 @@ export default function HomePage() {
                             </div>
 
                             {/* Funding Amount Section */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="fundingAmount" className="flex items-center gap-2">
                                         <DollarSign className="h-4 w-4" />
-                                        Initial Funding Amount
+                                        <span className="block md:hidden">Funding Amount</span>
+                                        <span className="hidden md:block">Initial Funding Amount</span>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Info className="h-4 w-4 text-muted-foreground tooltip-trigger" />

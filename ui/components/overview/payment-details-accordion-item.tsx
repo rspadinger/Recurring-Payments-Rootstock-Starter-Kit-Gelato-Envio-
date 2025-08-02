@@ -403,14 +403,14 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
                                                     <TableCell>
                                                         <div className="flex items-center gap-2">
                                                             <span className="text-sm font-medium">{payment.title}</span>
-                                                            <code className="text-xs bg-muted px-2 py-1 rounded">
+                                                            <code className="hidden sm:inline text-xs bg-muted px-2 py-1 rounded">
                                                                 {abbreviateAddress(payment.plan)}
                                                             </code>
                                                             <Button
                                                                 variant="ghost"
                                                                 size="sm"
                                                                 onClick={() => copyToClipboard(payment.plan)}
-                                                                className="h-6 w-6 p-0"
+                                                                className="hidden sm:inline-flex h-6 w-6 p-0"
                                                             >
                                                                 <Copy className="h-3 w-3" />
                                                             </Button>
