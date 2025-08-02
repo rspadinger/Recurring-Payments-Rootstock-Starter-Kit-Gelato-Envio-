@@ -95,8 +95,10 @@ export default function HomePage() {
         if (isNaN(num)) {
             return "Payment amount must be a valid number"
         }
-        if (num <= 0) {
-            return "Payment amount must be greater than 0"
+
+        const paymentAmountWei = convertToWei(formData.paymentAmount, formData.paymentUnit)
+        if (paymentAmountWei < 10) {
+            return "Payment amount must be at least 10 wei"
         }
         if (num > 1e15) {
             return "Payment amount is too large"
@@ -330,7 +332,7 @@ export default function HomePage() {
                 {/* Page Header */}
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold text-foreground mb-4">Create a Recurring Payment Plan</h1>
-                    <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                    <p className="hidden md:block text-lg text-muted-foreground max-w-2xl mx-auto">
                         This Dapp lets you schedule automatic recurring payments to any wallet address using Rootstock.
                         Specify an amount, time interval, and funding.
                     </p>
@@ -343,7 +345,9 @@ export default function HomePage() {
                             <DollarSign className="h-5 w-5" />
                             Payment Plan Configuration
                         </CardTitle>
-                        <CardDescription>Configure your recurring payment schedule and funding details</CardDescription>
+                        <CardDescription className="hidden md:block">
+                            Configure your recurring payment schedule and funding details
+                        </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleCreatePlan} className="space-y-6">
@@ -534,8 +538,8 @@ export default function HomePage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="fundingAmount" className="flex items-center gap-2">
                                         <DollarSign className="h-4 w-4" />
-                                        <span className="block md:hidden">Funding Amount</span>
-                                        <span className="hidden md:block">Initial Funding Amount</span>
+                                        <span className="block sm:hidden">Fund</span>
+                                        <span className="hidden sm:block">Initial Funding Amount</span>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Info className="h-4 w-4 text-muted-foreground tooltip-trigger" />
@@ -581,7 +585,7 @@ export default function HomePage() {
 
                             {/* Status Message */}
                             {status && (
-                                <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                                <div className="hidden sm:block bg-muted/30 p-4 rounded-lg border border-border">
                                     <div className="flex items-start space-x-3">
                                         <Info className="h-5 w-5 text-cyan-500 mt-0.5" />
                                         <div>

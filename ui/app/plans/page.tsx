@@ -464,7 +464,10 @@ export default function PaymentPlansPage() {
             <div className="container mx-auto px-4 py-8 max-w-6xl">
                 {/* Page Header */}
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-foreground mb-4">Your Recurring Payment Plans</h1>
+                    <h1 className="hidden sm:block text-3xl font-bold text-foreground mb-4">
+                        Your Recurring Payment Plans
+                    </h1>
+                    <h1 className="block sm:hidden text-3xl font-bold text-foreground mb-4">Your Payment Plans</h1>
                     <p className="hidden md:block text-lg text-muted-foreground max-w-3xl mx-auto">
                         View and manage your existing recurring payment plans. Update payment intervals, change payment
                         amounts, and monitor performance.
@@ -502,9 +505,9 @@ export default function PaymentPlansPage() {
                             return (
                                 <Card key={plan.planAddress} className="w-full plan-card">
                                     <CardHeader className="pb-2 pt-2 plan-card-header">
-                                        <div className="flex  flex-row items-center justify-between gap-4">
+                                        <div className="flex flex-row items-center justify-between gap-4">
                                             <div className="space-y-2">
-                                                <CardTitle className="flex items-center gap-2 text-lg">
+                                                <CardTitle className="flex items-center gap-2 text-sm sm:text-lg">
                                                     <Activity className="h-5 w-5 text-cyan-600" />
                                                     {plan.title || "Untitled Plan"}
                                                     <div className="flex items-center gap-4 flex-wrap">
@@ -541,8 +544,8 @@ export default function PaymentPlansPage() {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="text-sm font-medium">Balance</p>
-                                                    <p className="font-semibold text-cyan-700">
+                                                    <p className="text-xs sm:text-sm font-medium">Balance</p>
+                                                    <p className="text-xs sm:text-base font-semibold text-cyan-700">
                                                         {balanceFormatted.value} {balanceFormatted.unit}
                                                     </p>
                                                 </div>
@@ -560,7 +563,7 @@ export default function PaymentPlansPage() {
                                                                     updatingPlanAddress === plan.planAddress
                                                                 }
                                                                 onClick={() => handlePause(plan.planAddress)}
-                                                                className="h-6 px-2 text-xs"
+                                                                className="h-5 px-1.5 text-[10px] sm:h-6 sm:px-2 sm:text-xs"
                                                             >
                                                                 {isPausing &&
                                                                     updatingPlanAddress === plan.planAddress && (
@@ -576,7 +579,7 @@ export default function PaymentPlansPage() {
                                                                     updatingPlanAddress === plan.planAddress
                                                                 }
                                                                 onClick={() => handleCancel(plan.planAddress)}
-                                                                className="h-6 px-2 mt-1 text-xs bg-gray-200 text-red-600 hover:text-red-700 border-1 border-red-800 hover:border-red-300"
+                                                                className="h-5 px-1.5 text-[10px] sm:h-6 sm:px-2 sm:text-xs mt-1 bg-gray-200 text-red-600 hover:text-red-700 border-1 border-red-800 hover:border-red-300"
                                                             >
                                                                 {isCanceling &&
                                                                     updatingPlanAddress === plan.planAddress && (
@@ -649,7 +652,7 @@ export default function PaymentPlansPage() {
                                                         onClick={() => copyToClipboard(plan.recipient)}
                                                         className="h-6 w-6 p-0"
                                                     >
-                                                        <Copy className="h-3 w-3" />
+                                                        <Copy className="hidden sm:block h-3 w-3" />
                                                     </Button>
                                                 </div>
                                             </div>
@@ -657,6 +660,7 @@ export default function PaymentPlansPage() {
                                             <div className="space-y-2">
                                                 <Label className="flex items-center gap-2 text-sm font-medium">
                                                     <CheckCheck className="h-4 w-4" />
+                                                    Payments Made
                                                 </Label>
                                                 <p className="text-lg font-semibold">{plan.numberOfPayments}</p>
                                             </div>
