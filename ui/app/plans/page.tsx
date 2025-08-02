@@ -1007,7 +1007,7 @@ export default function PaymentPlansPage() {
 
                                         {/* Status Message */}
                                         {status && updatingPlanAddress === plan.planAddress && (
-                                            <div className="bg-muted/30 p-4 rounded-lg border border-border">
+                                            <div className="hidden sm:block bg-muted/30 p-4 rounded-lg border border-border">
                                                 <div className="flex items-start space-x-3">
                                                     <Info className="h-5 w-5 text-cyan-500 mt-0.5" />
                                                     <div>
