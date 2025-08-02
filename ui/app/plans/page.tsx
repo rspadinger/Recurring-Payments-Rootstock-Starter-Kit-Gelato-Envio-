@@ -90,6 +90,12 @@ export default function PaymentPlansPage() {
     useEffect(() => {
         if (!isLoading && paymentPlans && !isError) {
             setPlans(paymentPlans)
+
+            const defaults: Record<string, { amount: string; unit: string }> = {}
+            for (const plan of paymentPlans) {
+                defaults[plan.planAddress] = { amount: "", unit: "wei" }
+            }
+            setFundingValues(defaults)
         }
     }, [isLoading, isError, paymentPlans])
 
