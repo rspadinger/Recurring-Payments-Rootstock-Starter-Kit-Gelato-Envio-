@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+// @ts-expect-error working fine
 import { useAccount } from "wagmi"
 import { graphqlClient } from "@/lib/graphql/client"
 import { GET_PAYMENT_DETAILS_BY_PAYER, GET_TOTAL_PAYMENTS_BY_PAYER_AGGR } from "@/lib/graphql/queries"
@@ -10,6 +11,15 @@ type Totals = {
     } | null
 }
 
+type PaymentExecutedResponse = {
+    RecurringPayment_PaymentExecuted: {
+        amount: string
+        timestamp: string | number
+        payer: string
+        recipient: string
+    }[]
+}
+
 export const usePaymentTotals = () => {
     const { address } = useAccount()
 
@@ -19,7 +29,7 @@ export const usePaymentTotals = () => {
         staleTime: 10_000,
         refetchInterval: 10_000,
         queryFn: async () => {
-            const res = await graphqlClient.request(GET_PAYMENT_DETAILS_BY_PAYER, {
+            const res = await graphqlClient.request<PaymentExecutedResponse>(GET_PAYMENT_DETAILS_BY_PAYER, {
                 payer: address,
             })
 

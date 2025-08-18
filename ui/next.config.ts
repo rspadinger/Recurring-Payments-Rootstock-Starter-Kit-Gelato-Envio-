@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
     typescript: {
         // !! WARNING !!
         // temporarily ignore build errors for a quick test deploy
-        ignoreBuildErrors: true,
+        //ignoreBuildErrors: true,
     },
 }
 

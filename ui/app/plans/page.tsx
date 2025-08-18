@@ -56,8 +56,8 @@ interface PaymentPlan {
     recipient: string
     numberOfPayments: number
     totalAmountOfPayment: string
-    firstPayment: number
-    lastPayment: number
+    firstPayment: number | null
+    lastPayment: number | null
     paymentInterval: number
     paymentAmount: string
     title?: string
@@ -152,7 +152,7 @@ export default function PaymentPlansPage() {
                 contract: contractType.RecurringPayment,
                 functionName: "pausePlan",
                 args: [],
-                overrideAddress: planAddress,
+                overrideAddress: planAddress as `0x${string}`,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -195,7 +195,7 @@ export default function PaymentPlansPage() {
                 contract: contractType.RecurringPayment,
                 functionName: "resumePlan",
                 args: [],
-                overrideAddress: planAddress,
+                overrideAddress: planAddress as `0x${string}`,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -238,7 +238,7 @@ export default function PaymentPlansPage() {
                 contract: contractType.RecurringPayment,
                 functionName: "cancelPlan",
                 args: [],
-                overrideAddress: planAddress,
+                overrideAddress: planAddress as `0x${string}`,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -302,7 +302,7 @@ export default function PaymentPlansPage() {
                 contract: contractType.RecurringPayment,
                 functionName: "setInterval",
                 args: [totalSeconds],
-                overrideAddress: planAddress,
+                overrideAddress: planAddress as `0x${string}`,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -358,7 +358,7 @@ export default function PaymentPlansPage() {
                 contract: contractType.RecurringPayment,
                 functionName: "setAmount",
                 args: [weiAmount],
-                overrideAddress: planAddress,
+                overrideAddress: planAddress as `0x${string}`,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -401,7 +401,7 @@ export default function PaymentPlansPage() {
             return
         }
 
-        const weiAmount = convertToWei(values.amount, values.unit as "wei" | "gwei" | "eth")
+        const weiAmount = BigInt(convertToWei(values.amount, values.unit as "wei" | "gwei" | "eth"))
 
         setStatus("Funding recurring payment plan...")
 
@@ -414,7 +414,7 @@ export default function PaymentPlansPage() {
                 functionName: "addFunds",
                 args: [],
                 value: weiAmount,
-                overrideAddress: planAddress,
+                overrideAddress: planAddress as `0x${string}`,
                 onSuccess: (txnHash) => {
                     toast.success(`Transaction sent!`)
                     setStatus(`Txn hash: ${txnHash}`)
@@ -686,7 +686,7 @@ export default function PaymentPlansPage() {
                                                     <Calendar className="h-4 w-4 text-cyan-600" />
                                                     First Payment
                                                 </Label>
-                                                <p className="text-sm">{formatTimestamp(plan.firstPayment)}</p>
+                                                <p className="text-sm">{formatTimestamp(plan.firstPayment ?? 0)}</p>
                                             </div>
 
                                             <div className="space-y-2">
@@ -694,7 +694,7 @@ export default function PaymentPlansPage() {
                                                     <Calendar className="h-4 w-4 text-cyan-600" />
                                                     Last Payment
                                                 </Label>
-                                                <p className="text-sm">{formatTimestamp(plan.lastPayment)}</p>
+                                                <p className="text-sm">{formatTimestamp(plan.lastPayment ?? 0)}</p>
                                             </div>
                                         </div>
 

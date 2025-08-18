@@ -1,12 +1,19 @@
 import RecurringPaymentFactoryAbi from "@/abi/RecurringPaymentFactory.json"
 import RecurringPaymentAbi from "@/abi/RecurringPayment.json"
 
-export const CONTRACTS = {
+export type ContractType = "RecurringPaymentFactory" | "RecurringPayment"
+
+export type ContractInfo = {
+    abi: any
+    addresses?: Record<number, `0x${string}` | undefined> // chainId -> address
+}
+
+export const CONTRACTS: Record<ContractType, ContractInfo> = {
     RecurringPaymentFactory: {
         abi: RecurringPaymentFactoryAbi,
         addresses: {
-            30: "", // RSK Mainnet
-            31: process.env.NEXT_PUBLIC_PAYMENT_FACTORY_ADDRESS_31 || "", // RSK Testnet
+            30: undefined, // RSK Mainnet
+            31: process.env.NEXT_PUBLIC_PAYMENT_FACTORY_ADDRESS_31 as `0x${string}`, // RSK Testnet
         },
     },
     RecurringPayment: {
@@ -18,8 +25,6 @@ export const contractType = {
     RecurringPaymentFactory: "RecurringPaymentFactory",
     RecurringPayment: "RecurringPayment",
 } as const
-
-export type ContractType = keyof typeof CONTRACTS
 
 export const CHAIN_ID_RSKMAIN = 30
 export const CHAIN_ID_RSKTEST = 31

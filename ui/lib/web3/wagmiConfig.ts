@@ -5,6 +5,7 @@ import { rootstockTestnet } from "viem/chains" // mainnet: rootstock
 import { ALCHEMY_RPC_RSKTEST } from "@/constants"
 
 export const wagmiConfig = createConfig({
+    defaultChain: rootstockTestnet,
     chains: [rootstockTestnet],
     transports: {
         // [rootstock.id]: http(`${ALCHEMY_RPC_RSKMAIN}`),

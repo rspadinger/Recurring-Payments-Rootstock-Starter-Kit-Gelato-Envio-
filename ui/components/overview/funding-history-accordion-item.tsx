@@ -16,7 +16,7 @@ interface FundingEvent {
     plan: string
     amount: string
     payer: string
-    timestamp: number
+    timestamp: number | null
     title: string
 }
 
@@ -204,7 +204,7 @@ export default function FundingHistoryAccordionItem() {
                                                             </Button>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>{formatTimestamp(funding.timestamp)}</TableCell>
+                                                    <TableCell>{formatTimestamp(funding.timestamp ?? 0)}</TableCell>
                                                 </TableRow>
                                             )
                                         })}

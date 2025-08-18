@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useWriteContract } from "wagmi"
 import { ContractType, ALLOWED_CHAIN_IDS } from "@/constants"
 import { getContractABI, getContractAddress, useEnsureCorrectChain } from "@/lib/web3/utils"
+import { parseGwei } from "viem"
 
 export const useContractWrite = () => {
     const { writeContractAsync } = useWriteContract()
@@ -28,8 +29,8 @@ export const useContractWrite = () => {
         args?: readonly unknown[]
         value?: bigint
         overrideAddress?: `0x${string}`
-        onSuccess?: (result: any) => void
-        onError?: (error: any) => void
+        onSuccess?: (result: unknown) => void
+        onError?: (error: unknown) => void
     }): Promise<{ result: any; status: string }> => {
         setIsLoading(true)
         setStatus("")

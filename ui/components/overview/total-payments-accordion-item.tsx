@@ -16,7 +16,7 @@ export default function TotalPaymentsAccordionItem() {
 
     useEffect(() => {
         if (!isLoading && data && !isError) {
-            setTotalAmount(formatWeiAmount(data.sum.amount))
+            setTotalAmount(formatWeiAmount(data.sum?.amount ?? "0"))
             setTotalCount(data.count)
         }
     }, [data, isLoading, isError])

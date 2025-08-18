@@ -61,8 +61,8 @@ export const formatInterval = (seconds: number): { value: number; unit: string }
     return { value: seconds, unit: "seconds" }
 }
 
-export const convertToSeconds = (duration: string, unit: string): number => {
-    const num = Number.parseFloat(duration)
+export const convertToSeconds = (duration: string | number, unit: string): number => {
+    const num = typeof duration === "number" ? duration : Number.parseFloat(duration)
     if (isNaN(num)) return 0
 
     const multipliers = {

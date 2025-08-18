@@ -28,7 +28,15 @@ interface Payment {
 type SortField = "plan" | "amount" | "recipientOrPayer" | "timestamp"
 type SortDirection = "asc" | "desc"
 
-export default function PaymentDetailsAccordionItem({ addressColumn = "RecipientOrPayer", displayPayer }) {
+type PaymentDetailsAccordionItemProps = {
+    addressColumn?: string
+    displayPayer?: boolean
+}
+
+export default function PaymentDetailsAccordionItem({
+    addressColumn = "RecipientOrPayer",
+    displayPayer = false,
+}: PaymentDetailsAccordionItemProps) {
     const { data: rawPayments, isLoading, isError } = usePaymentDetails(displayPayer)
 
     // State
@@ -51,7 +59,7 @@ export default function PaymentDetailsAccordionItem({ addressColumn = "Recipient
 
     useEffect(() => {
         if (!isLoading && rawPayments && !isError) {
-            setPayments(rawPayments)
+            setPayments(rawPayments as Payment[])
         }
     }, [rawPayments, isLoading, isError])
 

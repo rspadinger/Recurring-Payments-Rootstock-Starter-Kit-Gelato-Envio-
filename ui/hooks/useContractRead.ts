@@ -42,8 +42,8 @@ export const useContractRead = ({
             enabled: shouldRun,
             staleTime: 10_000,
             gcTime: 30_000,
-            onSuccess: (data) => onSuccess?.(data),
-            onError: (err) => onError?.(err),
+            onSuccess: (data: unknown) => onSuccess?.(data),
+            onError: (err: unknown) => onError?.(err),
         },
     })
 

@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+// @ts-expect-error working fine
 import { useAccount } from "wagmi"
 import { graphqlClient } from "@/lib/graphql/client"
 import { GET_FUNDING_DETAILS_BY_PLAN_OWNER } from "@/lib/graphql/queries"
@@ -9,6 +10,10 @@ type FundingDetails = {
     amount: string
     timestamp: number | null
     title: string
+}
+
+type FundsAddedResponse = {
+    RecurringPayment_FundsAdded: FundingDetails[]
 }
 
 export const useFundingDetails = () => {
@@ -23,7 +28,7 @@ export const useFundingDetails = () => {
             if (!address) return []
 
             try {
-                const response = await graphqlClient.request(GET_FUNDING_DETAILS_BY_PLAN_OWNER, {
+                const response = await graphqlClient.request<FundsAddedResponse>(GET_FUNDING_DETAILS_BY_PLAN_OWNER, {
                     planOwner: address,
                 })
                 const funds = response?.RecurringPayment_FundsAdded ?? []

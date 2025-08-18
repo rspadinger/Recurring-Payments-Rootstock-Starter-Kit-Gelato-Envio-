@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,7 +12,7 @@ import { Info, Calendar, Clock, Wallet, DollarSign, FileText } from "lucide-reac
 import { toast } from "sonner"
 
 // @ts-expect-error working fine
-import { useAccount, useConfig } from "wagmi"
+import { useAccount, useConfig, useBalance } from "wagmi"
 import { waitForTransactionReceipt } from "wagmi/actions"
 import { usePrivy } from "@privy-io/react-auth"
 
@@ -97,7 +96,7 @@ export default function HomePage() {
         }
 
         const paymentAmountWei = convertToWei(formData.paymentAmount, formData.paymentUnit)
-        if (paymentAmountWei < 10) {
+        if (Number(paymentAmountWei) < 10) {
             return "Payment amount must be at least 10 wei"
         }
         if (num > 1e15) {
@@ -281,7 +280,7 @@ export default function HomePage() {
 
         // Convert values for smart contract
         const paymentAmountWei = convertToWei(formData.paymentAmount, formData.paymentUnit)
-        const fundingAmountWei = convertToWei(formData.fundingAmount, formData.fundingUnit)
+        const fundingAmountWei = BigInt(convertToWei(formData.fundingAmount, formData.fundingUnit))
         const intervalSeconds = convertToSeconds(formData.intervalDuration, formData.intervalUnit)
         const startTimeUnix = Math.floor(new Date(formData.startTime).getTime() / 1000)
 

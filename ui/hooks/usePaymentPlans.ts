@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
+// @ts-expect-error working fine
 import { useAccount } from "wagmi"
 import { getBalance, readContract } from "@wagmi/core"
 import { graphqlClient } from "@/lib/graphql/client"
@@ -25,6 +26,21 @@ type PlanDetails = {
     title: string
 }
 
+type PlansByPayerResponse = {
+    RecurringPaymentFactory_PlanCreated: Array<{
+        plan: string
+        recipient: string
+        title: string
+    }>
+}
+
+type PaymentExecutedResponse = {
+    RecurringPayment_PaymentExecuted: {
+        amount: string
+        timestamp: string | number
+    }[]
+}
+
 export const usePaymentPlans = () => {
     const { address } = useAccount()
     const abi = getContractABI(contractType.RecurringPayment)
@@ -34,14 +50,14 @@ export const usePaymentPlans = () => {
         enabled: !!address,
         staleTime: 10_000,
         refetchInterval: 10_000,
-
-        queryFn: async () => {
+        queryFn: async (): Promise<PlanDetails[]> => {
             if (!address) return []
 
             // 1. Fetch all plans for the connected user
-            const { RecurringPaymentFactory_PlanCreated: plans } = await graphqlClient.request(GET_PLANS_BY_PAYER, {
+            const response = await graphqlClient.request<PlansByPayerResponse>(GET_PLANS_BY_PAYER, {
                 payer: address,
             })
+            const plans = response.RecurringPaymentFactory_PlanCreated ?? []
 
             if (!plans.length) return []
 
@@ -50,36 +66,37 @@ export const usePaymentPlans = () => {
                 plans.map(async ({ plan, recipient, title }) => {
                     // Read ETH balance
                     const balance = await getBalance(wagmiConfig, {
-                        address: plan,
+                        address: plan as `0x${string}`,
                     })
 
                     // Read contract values
                     const [planStatus, paymentAmount, paymentInterval] = await Promise.all([
                         await readContract(wagmiConfig, {
-                            address: plan,
+                            address: plan as `0x${string}`,
                             abi,
                             functionName: "status",
+                            args: [],
                         }),
                         await readContract(wagmiConfig, {
-                            address: plan,
+                            address: plan as `0x${string}`,
                             abi,
                             functionName: "amount",
+                            args: [],
                         }),
                         await readContract(wagmiConfig, {
-                            address: plan,
+                            address: plan as `0x${string}`,
                             abi,
                             functionName: "interval",
+                            args: [],
                         }),
                     ])
 
                     // Get payment details for each plan
-                    const { RecurringPayment_PaymentExecuted } = await graphqlClient.request(
+                    const responsePayments = await graphqlClient.request<PaymentExecutedResponse>(
                         GET_PAYMENT_DETAILS_BY_PLAN,
-                        {
-                            plan: plan,
-                        }
+                        { plan }
                     )
-                    const payments = RecurringPayment_PaymentExecuted ?? []
+                    const payments = responsePayments?.RecurringPayment_PaymentExecuted ?? []
 
                     // Manual aggregation
                     const numberOfPayments = payments.length
@@ -114,7 +131,7 @@ export const usePaymentPlans = () => {
                         recipient,
                         balance: balance?.value.toString(),
                         status: Number(planStatus),
-                        paymentAmount: paymentAmount.toString(),
+                        paymentAmount: (paymentAmount as bigint).toString(),
                         paymentInterval: Number(paymentInterval),
                         numberOfPayments,
                         totalAmountOfPayment,
