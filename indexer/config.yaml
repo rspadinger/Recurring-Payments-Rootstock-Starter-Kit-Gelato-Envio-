@@ -3,7 +3,7 @@ name: envio-indexer
 networks:
     - id: 31
       rpc_config:
-          url: ${ENVIO_RPC_URL}
+          url: https://rootstock-testnet.g.alchemy.com/v2/2_F7dgp4mWUW4d089X4Ttyi0JUAESl_
       start_block: 6600000
       contracts:
           - name: RecurringPaymentFactory
