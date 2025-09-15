@@ -25,12 +25,12 @@ async function main() {
     console.log(`   bash ${verifyFilePath}\n`)
 
     //create plan
-    const now = Math.floor(Date.now() / 1000) // current timestamp in seconds
-    const tx = await recurringPaymentFactory.createPlan(RECIPIENT, 100, 120, now + 30, {
-        value: 500,
-    })
-    await tx.wait()
-    console.log("Recurring payment plan created.")
+    // const now = Math.floor(Date.now() / 1000) // current timestamp in seconds
+    // const tx = await recurringPaymentFactory.createPlan(RECIPIENT, 100, 120, now + 30, {
+    //     value: 500,
+    // })
+    // await tx.wait()
+    // console.log("Recurring payment plan created.")
 }
 
 main()

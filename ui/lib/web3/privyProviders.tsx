@@ -8,7 +8,7 @@ import { WagmiProvider } from "@privy-io/wagmi"
 import { PRIVY_APP_ID_RSKTEST, ALCHEMY_RPC_RSKTEST } from "@/constants"
 import { wagmiConfig } from "./wagmiConfig"
 import { addRpcUrlOverrideToChain } from "@privy-io/chains"
-import { sepolia, polygonAmoy, rootstockTestnet, rootstock } from "viem/chains"
+import { sepolia, rootstockTestnet, rootstock } from "viem/chains"
 
 const queryClient = new QueryClient()
 const rskTestnetOverride = addRpcUrlOverrideToChain(rootstockTestnet, ALCHEMY_RPC_RSKTEST as string)
@@ -19,13 +19,14 @@ export const privyConfig: PrivyClientConfig = {
         requireUserPasswordOnCreate: true,
         showWalletUIs: true,
     },
-    loginMethods: ["wallet", "email", "google", "github"], // "sms"
+    // For now, Privy does not fully support Rootstock for embedded wallet creation - hope, this is coming soon
+    loginMethods: ["wallet"], // "email", "google", "github"
     appearance: {
         showWalletLoginFirst: true,
         theme: "light",
     },
     defaultChain: rskTestnetOverride,
-    supportedChains: [rskTestnetOverride, sepolia, polygonAmoy, rootstock, rootstockTestnet],
+    supportedChains: [rskTestnetOverride, sepolia, rootstock],
 }
 
 export default function PrivyProviders({ children }: { children: React.ReactNode }) {

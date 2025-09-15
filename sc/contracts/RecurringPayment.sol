@@ -207,6 +207,14 @@ contract RecurringPayment is Initializable, Ownable, AutomateTaskCreatorUpgradea
         emit PlanUnpaused(address(this), payer, block.timestamp);
     }
 
+    // fees are subsidized on Testnet, for Mainnet, funds need to be provided to pay for txn fees
+    // for now, deposit USDC on Polygon
+    // don't forget to approve GasTank (0x7506C12a824d73D9b08564d5Afc22c949434755e) to spend USDC before depositing =>
+    // Polygon USDC: 0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359 => call approve (on write as proxy in polygonscan.com)
+    function depositFundsForGelatoFeePayments(uint256 _amount, address _token) external payable {
+        _depositFunds1Balance(_amount, _token, address(this));
+    }
+
     // ********************* GETTER FUNCTIONS *********************
 
     /// @notice Check if a plan is ready for payment

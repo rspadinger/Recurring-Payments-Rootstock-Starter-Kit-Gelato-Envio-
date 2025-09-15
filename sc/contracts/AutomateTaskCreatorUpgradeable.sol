@@ -26,7 +26,7 @@ abstract contract AutomateTaskCreatorUpgradeable is AutomateReadyUpgradeable, Au
         } else {
             ///@dev Only deposit USDC on polygon for now.
             require(
-                block.chainid == 137 && _token == address(0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174),
+                block.chainid == 137 && _token == address(0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359),
                 "Only deposit USDC on polygon"
             );
             IERC20(_token).approve(address(gelato1Balance), _amount);

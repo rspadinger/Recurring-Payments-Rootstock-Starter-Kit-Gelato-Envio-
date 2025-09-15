@@ -61,11 +61,11 @@ export default function HomePage() {
         fundingUnit: "wei",
     })
 
-    // Set default start time to now + 2 minutes
+    // Set default start time to now + 5 minutes
     useEffect(() => {
         const now = new Date()
-        now.setMinutes(now.getMinutes() + 2)
-        const defaultTime = now.toISOString().slice(0, 16)
+        now.setMinutes(now.getMinutes() + 5)
+        const defaultTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16)
         setFormData((prev) => ({ ...prev, startTime: defaultTime }))
     }, [])
 

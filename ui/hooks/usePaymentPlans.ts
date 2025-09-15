@@ -58,6 +58,7 @@ export const usePaymentPlans = () => {
                 payer: address,
             })
             const plans = response.RecurringPaymentFactory_PlanCreated ?? []
+            console.log("plans: ", plans, address)
 
             if (!plans.length) return []
 

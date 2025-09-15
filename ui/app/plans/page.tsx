@@ -89,6 +89,7 @@ export default function PaymentPlansPage() {
 
     useEffect(() => {
         if (!isLoading && paymentPlans && !isError) {
+            console.log("paymentPlans: ", paymentPlans)
             setPlans(paymentPlans)
 
             const defaults: Record<string, { amount: string; unit: string }> = {}
